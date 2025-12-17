@@ -342,13 +342,13 @@ ipcMain.handle('export-markdown', (event, project) => {
 });
 
 // Generate feature suggestions
-ipcMain.handle('suggest-features', async (event, { projectName, projectDescription, context }) => {
+ipcMain.handle('suggest-features', async (event, { projectName, projectDescription, context, excludeFeatures }) => {
   if (!groqClient) {
     return { error: 'Groq API key not configured' };
   }
 
   try {
-    const systemPrompt = `Du bist ein erfahrener Software-Architekt. Basierend auf einem Projekt schlägst du sinnvolle Features vor, die eingebaut werden könnten.
+    let systemPrompt = `Du bist ein erfahrener Software-Architekt. Basierend auf einem Projekt schlägst du sinnvolle Features vor, die eingebaut werden könnten.
 
 Antworte AUSSCHLIESSLICH mit validem JSON (kein Markdown, keine Erklärungen):
 
@@ -372,6 +372,13 @@ Richtlinien:
 - Zeitschätzungen für AI-Coding (3-5x schneller als traditionell)
 - Wähle passende Emojis als Icons
 - Features sollten konkret und umsetzbar sein`;
+
+    if (excludeFeatures && excludeFeatures.length > 0) {
+      systemPrompt += `\n\nWICHTIG: Schlage KEINE Features vor, die diesen ähnlich sind (bereits vorgeschlagen):
+${excludeFeatures.map(f => `- ${f}`).join('\n')}
+
+Schlage stattdessen NEUE, ANDERE Features vor!`;
+    }
 
     const userPrompt = `Projekt: ${projectName}
 Beschreibung: ${projectDescription}

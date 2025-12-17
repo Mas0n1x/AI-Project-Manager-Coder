@@ -56,6 +56,7 @@ const elements = {
   featuresLoading: document.getElementById('features-loading'),
   skipFeaturesBtn: document.getElementById('skip-features-btn'),
   addFeaturesBtn: document.getElementById('add-features-btn'),
+  generateMoreFeaturesBtn: document.getElementById('generate-more-features-btn'),
   toast: document.getElementById('toast'),
   toastMessage: document.getElementById('toast-message'),
   searchInput: document.getElementById('search-input'),
@@ -236,6 +237,7 @@ function setupEventListeners() {
   elements.closeFeatures.addEventListener('click', closeFeaturesModal);
   elements.skipFeaturesBtn.addEventListener('click', closeFeaturesModal);
   elements.addFeaturesBtn.addEventListener('click', addSelectedFeatures);
+  elements.generateMoreFeaturesBtn.addEventListener('click', generateMoreFeatures);
 
   // New project
   elements.newProjectBtn.addEventListener('click', newProject);
@@ -1346,6 +1348,50 @@ window.toggleFeatureSelection = function(idx) {
 function closeFeaturesModal() {
   elements.featuresModal.classList.add('hidden');
   suggestedFeatures = [];
+}
+
+async function generateMoreFeatures() {
+  // Keep existing features that are selected
+  const existingTitles = suggestedFeatures.map(f => f.title.toLowerCase());
+
+  elements.featuresList.classList.add('hidden');
+  elements.featuresLoading.classList.remove('hidden');
+
+  try {
+    const result = await window.electronAPI.suggestFeatures({
+      projectName: currentProject.name,
+      projectDescription: currentProject.description,
+      context: pendingProjectContext,
+      excludeFeatures: existingTitles
+    });
+
+    if (result.error) {
+      showToast('Weitere Vorschläge konnten nicht geladen werden', 'warning');
+      elements.featuresLoading.classList.add('hidden');
+      elements.featuresList.classList.remove('hidden');
+      return;
+    }
+
+    // Filter out duplicates and add new features
+    const newFeatures = (result.features || []).filter(f =>
+      !existingTitles.includes(f.title.toLowerCase())
+    );
+
+    if (newFeatures.length === 0) {
+      showToast('Keine weiteren neuen Features gefunden', 'info');
+      elements.featuresLoading.classList.add('hidden');
+      elements.featuresList.classList.remove('hidden');
+      return;
+    }
+
+    suggestedFeatures = [...suggestedFeatures, ...newFeatures];
+    renderFeaturesList();
+    showToast(`${newFeatures.length} neue Features hinzugefügt!`);
+  } catch (e) {
+    showToast('Fehler beim Laden weiterer Vorschläge', 'error');
+    elements.featuresLoading.classList.add('hidden');
+    elements.featuresList.classList.remove('hidden');
+  }
 }
 
 function addSelectedFeatures() {
