@@ -16,6 +16,8 @@
           <button class="view-btn active" data-view="list">Liste</button>
           <button class="view-btn" data-view="kanban">Kanban</button>
           <button class="view-btn" data-view="gantt">Gantt</button>
+          <button class="view-btn" data-view="burndown">Burndown</button>
+          <button class="view-btn" data-view="timeline">Timeline</button>
         </div>
       </div>
       <div class="header-center">
@@ -28,6 +30,8 @@
         <button id="dashboard-btn" class="icon-btn" title="Dashboard">🏠</button>
         <button id="timetrack-btn" class="icon-btn" title="Zeiterfassung">⏱️</button>
         <button id="stats-btn" class="icon-btn" title="Statistiken">📊</button>
+        <button id="heatmap-btn" class="icon-btn" title="Heatmap">🔥</button>
+        <button id="dependency-btn" class="icon-btn" title="Abhängigkeiten">🔗</button>
         <button id="theme-toggle" class="icon-btn" title="Dark Mode">
           <span class="theme-icon">🌙</span>
         </button>
@@ -99,7 +103,11 @@
               <button id="save-btn" class="btn btn-secondary">💾 Speichern</button>
               <button id="export-md-btn" class="btn btn-secondary">📤 MD</button>
               <button id="export-pdf-btn" class="btn btn-secondary">📄 PDF</button>
+              <button id="export-csv-btn" class="btn btn-secondary">📊 CSV</button>
               <button id="ai-summary-btn" class="btn btn-secondary">🤖 Report</button>
+              <button id="ai-sprint-btn" class="btn btn-secondary">🏃 Sprint</button>
+              <button id="ai-autotag-btn" class="btn btn-secondary">🏷️ Auto-Tags</button>
+              <button id="suggest-features-btn" class="btn btn-primary">💡 Feature-Ideen</button>
             </div>
           </div>
 
@@ -165,8 +173,44 @@
             </div>
           </div>
 
+          <!-- Burndown Chart View -->
+          <div id="burndown-container" class="burndown-container hidden">
+            <div class="burndown-header">
+              <h3>📉 Burndown Chart</h3>
+              <p class="burndown-subtitle">Fortschritt über Zeit</p>
+            </div>
+            <div class="burndown-chart" id="burndown-chart"></div>
+            <div class="burndown-legend">
+              <span class="burndown-legend-item"><span class="legend-ideal"></span> Ideal</span>
+              <span class="burndown-legend-item"><span class="legend-actual"></span> Aktuell</span>
+            </div>
+          </div>
+
+          <!-- Milestone Timeline View -->
+          <div id="timeline-container" class="timeline-container hidden">
+            <div class="timeline-header">
+              <h3>🗓️ Milestone Timeline</h3>
+            </div>
+            <div class="timeline-content" id="timeline-content"></div>
+          </div>
+
           <!-- Gantt View -->
           <div id="gantt-container" class="gantt-container hidden">
+            <div class="gantt-settings">
+              <label class="gantt-setting">
+                <span>Arbeitsstunden pro Tag:</span>
+                <input type="number" id="gantt-hours-per-day" min="1" max="24" value="8">
+                <span>h</span>
+              </label>
+              <label class="gantt-setting">
+                <span>Tage anzeigen:</span>
+                <input type="number" id="gantt-days-count" min="7" max="60" value="14">
+              </label>
+              <label class="gantt-setting">
+                <input type="checkbox" id="gantt-skip-weekends">
+                <span>Wochenenden überspringen</span>
+              </label>
+            </div>
             <div class="gantt-header">
               <div class="gantt-task-col">Task</div>
               <div class="gantt-timeline" id="gantt-timeline-header"></div>
@@ -404,6 +448,98 @@
       <div class="modal-footer">
         <button id="cancel-split-btn" class="btn btn-secondary">Abbrechen</button>
         <button id="apply-split-btn" class="btn btn-primary">Subtasks übernehmen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Heatmap Modal -->
+  <div id="heatmap-modal" class="modal hidden">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2>🔥 Arbeitszeit-Heatmap</h2>
+        <button id="close-heatmap" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="heatmap-subtitle">Wann wurde am meisten gearbeitet?</p>
+        <div class="heatmap-grid" id="heatmap-grid"></div>
+        <div class="heatmap-legend">
+          <span>Weniger</span>
+          <div class="heatmap-scale">
+            <span class="scale-0"></span>
+            <span class="scale-1"></span>
+            <span class="scale-2"></span>
+            <span class="scale-3"></span>
+            <span class="scale-4"></span>
+          </div>
+          <span>Mehr</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dependency Graph Modal -->
+  <div id="dependency-modal" class="modal hidden">
+    <div class="modal-content modal-xl">
+      <div class="modal-header">
+        <h2>🔗 Task-Abhängigkeiten</h2>
+        <button id="close-dependency" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="dependency-subtitle">Visualisierung der Aufgaben-Struktur</p>
+        <div class="dependency-graph" id="dependency-graph"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sprint Planning Modal -->
+  <div id="sprint-modal" class="modal hidden">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2>🏃 Sprint-Planung</h2>
+        <button id="close-sprint" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="sprint-settings">
+          <div class="form-group">
+            <label>Sprint-Dauer (Tage):</label>
+            <input type="number" id="sprint-duration" class="form-input" value="14" min="1" max="30">
+          </div>
+          <div class="form-group">
+            <label>Stunden pro Tag:</label>
+            <input type="number" id="sprint-hours" class="form-input" value="8" min="1" max="24">
+          </div>
+          <button id="generate-sprint-btn" class="btn btn-primary">🤖 Sprint generieren</button>
+        </div>
+        <div id="sprint-result" class="sprint-result hidden"></div>
+        <div id="sprint-loading" class="features-loading hidden">
+          <div class="spinner"></div>
+          <p>AI plant optimalen Sprint...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="apply-sprint-btn" class="btn btn-primary hidden">Sprint übernehmen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auto Tags Modal -->
+  <div id="autotag-modal" class="modal hidden">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2>🏷️ Automatische Tags</h2>
+        <button id="close-autotag" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="autotag-subtitle">AI kategorisiert alle Tasks automatisch</p>
+        <div id="autotag-preview" class="autotag-preview"></div>
+        <div id="autotag-loading" class="features-loading hidden">
+          <div class="spinner"></div>
+          <p>AI analysiert Tasks...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancel-autotag-btn" class="btn btn-secondary">Abbrechen</button>
+        <button id="apply-autotag-btn" class="btn btn-primary">Tags übernehmen</button>
       </div>
     </div>
   </div>

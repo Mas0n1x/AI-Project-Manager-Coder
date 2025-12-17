@@ -36,5 +36,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getTimeTracking: () => ipcRenderer.invoke('get-time-tracking'),
 
   // Export
-  exportMarkdown: (project) => ipcRenderer.invoke('export-markdown', project)
+  exportMarkdown: (project) => ipcRenderer.invoke('export-markdown', project),
+
+  // Sprint Planning
+  planSprint: (data) => ipcRenderer.invoke('plan-sprint', data),
+
+  // Auto Tags
+  autoTagTasks: (data) => ipcRenderer.invoke('auto-tag-tasks', data)
 });

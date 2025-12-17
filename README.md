@@ -1,43 +1,50 @@
 # AI Project Manager
 
-Eine Electron Desktop-App, die Projektziele mithilfe von AI (Groq API) in strukturierte Tasks, Meilensteine und Zeitschatzungen zerlegt.
+Eine Electron Desktop-App, die Projektziele mithilfe von AI (Groq API) in strukturierte Tasks, Meilensteine und Zeitschätzungen zerlegt.
 
 ## Features
 
 ### Kernfunktionen
-- **AI-Projektanalyse**: Beschreibe dein Projektziel und die AI erstellt automatisch Meilensteine, Tasks und Zeitschatzungen
-- **Feature-Vorschlage**: Nach der Analyse schlagt die AI passende Features vor, die du hinzufugen kannst
-- **AI Chat**: Direkter Chat mit der AI fur Hilfe bei Tasks und Fragen
+- **AI-Projektanalyse**: Beschreibe dein Projektziel und die AI erstellt automatisch Meilensteine, Tasks und Zeitschätzungen
+- **Feature-Vorschläge**: Nach der Analyse schlägt die AI passende Features vor, die du hinzufügen kannst
+- **AI Chat**: Direkter Chat mit der AI für Hilfe bei Tasks und Fragen
+- **AI Sprint-Planung**: AI plant optimale Sprint-Reihenfolge basierend auf Prioritäten und Kapazität
+- **Automatische Tags**: AI kategorisiert Tasks automatisch mit passenden Tags
 
 ### Ansichten
 - **Listen-Ansicht**: Klassische hierarchische Darstellung mit Meilensteinen und Tasks
 - **Kanban-Board**: Tasks nach Status (Todo, In Progress, Done) organisiert
-- **Gantt-Chart**: Timeline-Ansicht aller Tasks uber 14 Tage
+- **Gantt-Chart**: Timeline-Ansicht aller Tasks mit konfigurierbaren Arbeitsstunden
+- **Burndown-Chart**: Visualisierung des Projektfortschritts über Zeit
+- **Milestone-Timeline**: Übersicht aller Meilensteine auf einer Zeitachse
 
 ### Task-Management
-- **Prioritaten**: Hoch, Mittel, Niedrig mit farblicher Markierung
+- **Prioritäten**: Hoch, Mittel, Niedrig mit farblicher Markierung
 - **Tags**: Kategorisierung von Tasks (frontend, backend, bug, feature, etc.)
-- **Subtasks**: Unteraufgaben fur komplexe Tasks
-- **AI Task-Aufteilung**: AI teilt grosse Tasks automatisch in Subtasks auf
+- **Subtasks**: Unteraufgaben für komplexe Tasks
+- **AI Task-Aufteilung**: AI teilt große Tasks automatisch in Subtasks auf
 - **Timer**: Zeiterfassung pro Task mit Start/Stop/Reset
-- **Notizen**: Zusatzliche Informationen pro Task
+- **Notizen**: Zusätzliche Informationen pro Task
 - **Erinnerungen**: Datum/Zeit-basierte Erinnerungen
 
 ### Dashboard & Tracking
-- **Dashboard**: Ubersicht uber alle Projekte mit KPIs
-- **Arbeitszeit-Tracking**: Wochenuebersicht der getrackteten Zeit
+- **Dashboard**: Übersicht über alle Projekte mit KPIs
+- **Arbeitszeit-Tracking**: Wochenübersicht der getrackteten Zeit
 - **Statistiken**: Fortschritt, erledigte Tasks, Zeitvergleich
+- **Heatmap**: Visualisierung wann am meisten gearbeitet wurde
+- **Dependency-Graph**: Visualisierung der Task-Abhängigkeiten
 
 ### Export & Reports
 - **Markdown-Export**: Projekte als .md Datei exportieren
-- **PDF-Export**: Formatierte PDF uber Druckdialog
+- **PDF-Export**: Formatierte PDF über Druckdialog
+- **CSV-Export**: Tasks als Tabelle exportieren
 - **AI Report**: AI generiert professionelle Statusberichte
 
 ### UI/UX
-- **Dark Mode / Light Mode**: Theme umschaltbar
+- **Dark Mode / Light Mode**: Premium Dark Theme mit Neon-Grünen Akzenten
 - **Drag & Drop**: Meilensteine per Drag & Drop umsortieren
-- **Suche & Filter**: Tasks durchsuchen und nach Status/Prioritat filtern
-- **Keyboard Shortcuts**: Strg+S zum Speichern, Escape zum Schliessen
+- **Suche & Filter**: Tasks durchsuchen und nach Status/Priorität filtern
+- **Keyboard Shortcuts**: Strg+S zum Speichern, Escape zum Schließen
 
 ## Installation
 
@@ -93,31 +100,61 @@ ai-project-manager/
 ├── preload.js           # IPC Bridge
 ├── public/
 │   ├── index.html       # Haupt-UI
-│   ├── styles.css       # Styling
+│   ├── styles.css       # Styling (Premium Dark Theme)
 │   └── app.js           # Frontend-Logik
-├── projects/            # Gespeicherte Projekte (JSON)
-├── data/                # App-Daten (Settings, Timetracking)
+├── data/                # App-Daten (Settings, Timetracking, Projekte)
 ├── dist/                # Build-Output
 └── package.json
 ```
 
-## Tastenkurzel
+## Tastenkürzel
 
 | Shortcut | Aktion |
 |----------|--------|
 | `Strg+S` | Projekt speichern |
-| `Escape` | Modals schliessen |
+| `Escape` | Modals schließen |
+
+## Views & Buttons
+
+### Header-Buttons
+| Button | Funktion |
+|--------|----------|
+| 🏠 | Dashboard mit Projektübersicht |
+| ⏱️ | Zeiterfassungs-Übersicht |
+| 📊 | Statistiken Modal |
+| 🔥 | Heatmap (Arbeitszeit-Visualisierung) |
+| 🔗 | Dependency-Graph (Task-Abhängigkeiten) |
+| 🌙 | Dark/Light Mode Toggle |
+| ⚙️ | Einstellungen |
+
+### Action-Buttons (bei geöffnetem Projekt)
+| Button | Funktion |
+|--------|----------|
+| 💾 | Projekt speichern |
+| 📤 MD | Markdown exportieren |
+| 📄 PDF | PDF exportieren |
+| 📊 CSV | CSV exportieren |
+| 🤖 Report | AI-generierten Statusbericht erstellen |
+| 🏃 Sprint | AI Sprint-Planung |
+| 🏷️ Auto-Tags | AI generiert Tags für alle Tasks |
+| 💡 Feature-Ideen | AI schlägt neue Features vor |
 
 ## Screenshots
 
 ### Hauptansicht
-Die App zeigt Projekte mit Meilensteinen und Tasks in einer ubersichtlichen Liste.
+Die App zeigt Projekte mit Meilensteinen und Tasks in einer übersichtlichen Liste mit Premium Dark Theme.
 
 ### Kanban-Board
 Tasks werden nach Status in Spalten organisiert.
 
 ### Gantt-Chart
-Timeline-Ansicht fur Projektplanung.
+Timeline-Ansicht für Projektplanung mit konfigurierbaren Arbeitsstunden pro Tag.
+
+### Burndown-Chart
+Visualisierung des Projektfortschritts mit Ideal- und Ist-Linie.
+
+### Milestone-Timeline
+Vertikale Zeitachse aller Meilensteine mit Fortschrittsanzeige.
 
 ## Lizenz
 

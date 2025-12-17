@@ -77,6 +77,7 @@ const elements = {
   timetrackBtn: document.getElementById('timetrack-btn'),
   exportPdfBtn: document.getElementById('export-pdf-btn'),
   aiSummaryBtn: document.getElementById('ai-summary-btn'),
+  suggestFeaturesBtn: document.getElementById('suggest-features-btn'),
   aiSplitTaskBtn: document.getElementById('ai-split-task-btn'),
   dashboardModal: document.getElementById('dashboard-modal'),
   closeDashboard: document.getElementById('close-dashboard'),
@@ -97,7 +98,30 @@ const elements = {
   applySplitBtn: document.getElementById('apply-split-btn'),
   ganttContainer: document.getElementById('gantt-container'),
   ganttBody: document.getElementById('gantt-body'),
-  ganttTimelineHeader: document.getElementById('gantt-timeline-header')
+  ganttTimelineHeader: document.getElementById('gantt-timeline-header'),
+  ganttHoursPerDay: document.getElementById('gantt-hours-per-day'),
+  ganttDaysCount: document.getElementById('gantt-days-count'),
+  ganttSkipWeekends: document.getElementById('gantt-skip-weekends'),
+  // New chart elements
+  burndownContainer: document.getElementById('burndown-container'),
+  timelineContainer: document.getElementById('timeline-container'),
+  heatmapBtn: document.getElementById('heatmap-btn'),
+  dependencyBtn: document.getElementById('dependency-btn'),
+  heatmapModal: document.getElementById('heatmap-modal'),
+  closeHeatmap: document.getElementById('close-heatmap'),
+  dependencyModal: document.getElementById('dependency-modal'),
+  closeDependency: document.getElementById('close-dependency'),
+  sprintModal: document.getElementById('sprint-modal'),
+  closeSprint: document.getElementById('close-sprint'),
+  generateSprintBtn: document.getElementById('generate-sprint-btn'),
+  applySprintBtn: document.getElementById('apply-sprint-btn'),
+  autotagModal: document.getElementById('autotag-modal'),
+  closeAutotag: document.getElementById('close-autotag'),
+  cancelAutotagBtn: document.getElementById('cancel-autotag-btn'),
+  applyAutotagBtn: document.getElementById('apply-autotag-btn'),
+  exportCsvBtn: document.getElementById('export-csv-btn'),
+  aiSprintBtn: document.getElementById('ai-sprint-btn'),
+  aiAutotagBtn: document.getElementById('ai-autotag-btn')
 };
 
 // Initialize
@@ -257,6 +281,9 @@ function setupEventListeners() {
   elements.closeSummary.addEventListener('click', () => elements.summaryModal.classList.add('hidden'));
   elements.copySummaryBtn.addEventListener('click', copySummary);
 
+  // Feature Suggestions for existing project
+  elements.suggestFeaturesBtn.addEventListener('click', suggestFeaturesForProject);
+
   // Dashboard
   elements.dashboardBtn.addEventListener('click', showDashboard);
   elements.closeDashboard.addEventListener('click', () => elements.dashboardModal.classList.add('hidden'));
@@ -270,6 +297,11 @@ function setupEventListeners() {
   elements.closeSplitTask.addEventListener('click', () => elements.splitTaskModal.classList.add('hidden'));
   elements.cancelSplitBtn.addEventListener('click', () => elements.splitTaskModal.classList.add('hidden'));
   elements.applySplitBtn.addEventListener('click', applySplitSubtasks);
+
+  // Gantt settings
+  elements.ganttHoursPerDay.addEventListener('change', renderGantt);
+  elements.ganttDaysCount.addEventListener('change', renderGantt);
+  elements.ganttSkipWeekends.addEventListener('change', renderGantt);
 
   // Project name change
   elements.projectName.addEventListener('change', () => {
@@ -388,6 +420,56 @@ function setupEventListeners() {
       renderTimeTracking();
     });
   });
+
+  // New Feature Event Listeners
+  // CSV Export
+  if (elements.exportCsvBtn) {
+    elements.exportCsvBtn.addEventListener('click', exportCSV);
+  }
+
+  // Heatmap
+  if (elements.heatmapBtn) {
+    elements.heatmapBtn.addEventListener('click', showHeatmap);
+  }
+  if (elements.closeHeatmap) {
+    elements.closeHeatmap.addEventListener('click', () => elements.heatmapModal.classList.add('hidden'));
+  }
+
+  // Dependency Graph
+  if (elements.dependencyBtn) {
+    elements.dependencyBtn.addEventListener('click', showDependencyGraph);
+  }
+  if (elements.closeDependency) {
+    elements.closeDependency.addEventListener('click', () => elements.dependencyModal.classList.add('hidden'));
+  }
+
+  // Sprint Planning
+  if (elements.aiSprintBtn) {
+    elements.aiSprintBtn.addEventListener('click', () => elements.sprintModal.classList.remove('hidden'));
+  }
+  if (elements.closeSprint) {
+    elements.closeSprint.addEventListener('click', () => elements.sprintModal.classList.add('hidden'));
+  }
+  if (elements.generateSprintBtn) {
+    elements.generateSprintBtn.addEventListener('click', generateSprintPlan);
+  }
+  if (elements.applySprintBtn) {
+    elements.applySprintBtn.addEventListener('click', applySprintPlan);
+  }
+
+  // Auto Tags
+  if (elements.aiAutotagBtn) {
+    elements.aiAutotagBtn.addEventListener('click', generateAutoTags);
+  }
+  if (elements.closeAutotag) {
+    elements.closeAutotag.addEventListener('click', () => elements.autotagModal.classList.add('hidden'));
+  }
+  if (elements.cancelAutotagBtn) {
+    elements.cancelAutotagBtn.addEventListener('click', () => elements.autotagModal.classList.add('hidden'));
+  }
+  if (elements.applyAutotagBtn) {
+    elements.applyAutotagBtn.addEventListener('click', applyAutoTags);
+  }
 }
 
 // New project
@@ -571,6 +653,8 @@ function renderProject() {
   elements.milestonesContainer.style.display = 'none';
   elements.kanbanContainer.classList.remove('active');
   elements.ganttContainer.classList.add('hidden');
+  if (elements.burndownContainer) elements.burndownContainer.classList.add('hidden');
+  if (elements.timelineContainer) elements.timelineContainer.classList.add('hidden');
 
   if (currentView === 'list') {
     elements.milestonesContainer.style.display = 'flex';
@@ -581,6 +665,16 @@ function renderProject() {
   } else if (currentView === 'gantt') {
     elements.ganttContainer.classList.remove('hidden');
     renderGantt();
+  } else if (currentView === 'burndown') {
+    if (elements.burndownContainer) {
+      elements.burndownContainer.classList.remove('hidden');
+      renderBurndown();
+    }
+  } else if (currentView === 'timeline') {
+    if (elements.timelineContainer) {
+      elements.timelineContainer.classList.remove('hidden');
+      renderTimeline();
+    }
   }
 }
 
@@ -1288,6 +1382,49 @@ async function showFeatureSuggestions() {
   }
 }
 
+// Suggest features for an existing project
+async function suggestFeaturesForProject() {
+  if (!currentProject) {
+    showToast('Kein Projekt ausgewählt', 'warning');
+    return;
+  }
+
+  // Get existing task titles to exclude from suggestions
+  const existingTasks = [];
+  for (const milestone of currentProject.milestones || []) {
+    for (const task of milestone.tasks || []) {
+      existingTasks.push(task.title.toLowerCase());
+    }
+  }
+
+  // Show modal with loading
+  elements.featuresModal.classList.remove('hidden');
+  elements.featuresList.classList.add('hidden');
+  elements.featuresLoading.classList.remove('hidden');
+
+  try {
+    const result = await window.electronAPI.suggestFeatures({
+      projectName: currentProject.name,
+      projectDescription: currentProject.description,
+      context: currentProject.context || '',
+      excludeFeatures: existingTasks
+    });
+
+    if (result.error) {
+      showToast(result.error, 'error');
+      elements.featuresModal.classList.add('hidden');
+      return;
+    }
+
+    suggestedFeatures = result.features || [];
+    pendingProjectContext = currentProject.context || '';
+    renderFeaturesList();
+  } catch (e) {
+    showToast('Fehler beim Laden der Vorschläge', 'error');
+    elements.featuresModal.classList.add('hidden');
+  }
+}
+
 function renderFeaturesList() {
   elements.featuresLoading.classList.add('hidden');
   elements.featuresList.classList.remove('hidden');
@@ -1351,10 +1488,18 @@ function closeFeaturesModal() {
 }
 
 async function generateMoreFeatures() {
-  // Keep existing features that are selected
-  const existingTitles = suggestedFeatures.map(f => f.title.toLowerCase());
+  // Save currently selected indices
+  const selectedIndices = new Set();
+  elements.featuresList.querySelectorAll('.feature-checkbox:checked').forEach(checkbox => {
+    const item = checkbox.closest('.feature-item');
+    selectedIndices.add(parseInt(item.dataset.index));
+  });
 
-  elements.featuresList.classList.add('hidden');
+  // Keep existing feature titles to exclude
+  const existingTitles = suggestedFeatures.map(f => f.title.toLowerCase());
+  const startIndex = suggestedFeatures.length;
+
+  // Show loading indicator below existing features
   elements.featuresLoading.classList.remove('hidden');
 
   try {
@@ -1365,33 +1510,85 @@ async function generateMoreFeatures() {
       excludeFeatures: existingTitles
     });
 
+    elements.featuresLoading.classList.add('hidden');
+
     if (result.error) {
       showToast('Weitere Vorschläge konnten nicht geladen werden', 'warning');
-      elements.featuresLoading.classList.add('hidden');
-      elements.featuresList.classList.remove('hidden');
       return;
     }
 
-    // Filter out duplicates and add new features
+    // Filter out duplicates
     const newFeatures = (result.features || []).filter(f =>
       !existingTitles.includes(f.title.toLowerCase())
     );
 
     if (newFeatures.length === 0) {
       showToast('Keine weiteren neuen Features gefunden', 'info');
-      elements.featuresLoading.classList.add('hidden');
-      elements.featuresList.classList.remove('hidden');
       return;
     }
 
+    // Add new features to array
     suggestedFeatures = [...suggestedFeatures, ...newFeatures];
-    renderFeaturesList();
+
+    // Append new features to DOM (don't re-render existing ones)
+    appendNewFeatures(newFeatures, startIndex);
+
+    // Restore selections
+    selectedIndices.forEach(idx => {
+      const item = elements.featuresList.querySelector(`[data-index="${idx}"]`);
+      if (item) {
+        const checkbox = item.querySelector('.feature-checkbox');
+        checkbox.checked = true;
+        item.classList.add('selected');
+      }
+    });
+
     showToast(`${newFeatures.length} neue Features hinzugefügt!`);
   } catch (e) {
     showToast('Fehler beim Laden weiterer Vorschläge', 'error');
     elements.featuresLoading.classList.add('hidden');
-    elements.featuresList.classList.remove('hidden');
   }
+}
+
+function appendNewFeatures(features, startIndex) {
+  const complexityLabels = {
+    easy: 'Einfach',
+    medium: 'Mittel',
+    hard: 'Komplex'
+  };
+
+  features.forEach((feature, i) => {
+    const idx = startIndex + i;
+    const complexityLabel = complexityLabels[feature.complexity] || 'Mittel';
+
+    const featureHtml = `
+      <div class="feature-item" data-index="${idx}" onclick="toggleFeatureSelection(${idx})">
+        <input type="checkbox" class="feature-checkbox" id="feature-${idx}" onclick="event.stopPropagation()">
+        <div class="feature-content">
+          <div class="feature-header">
+            <span class="feature-icon">${feature.icon || '✨'}</span>
+            <span class="feature-title">${escapeHtml(feature.title)}</span>
+            <span class="feature-complexity ${feature.complexity || 'medium'}">${complexityLabel}</span>
+          </div>
+          <div class="feature-description">${escapeHtml(feature.description)}</div>
+          <div class="feature-estimate">⏱️ Geschätzt: ${feature.estimatedHours || 2}h</div>
+        </div>
+      </div>
+    `;
+
+    elements.featuresList.insertAdjacentHTML('beforeend', featureHtml);
+
+    // Add event listener for the new checkbox
+    const newItem = elements.featuresList.querySelector(`[data-index="${idx}"]`);
+    const checkbox = newItem.querySelector('.feature-checkbox');
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) {
+        newItem.classList.add('selected');
+      } else {
+        newItem.classList.remove('selected');
+      }
+    });
+  });
 }
 
 function addSelectedFeatures() {
@@ -1826,6 +2023,11 @@ function applySplitSubtasks() {
 function renderGantt() {
   if (!currentProject) return;
 
+  // Get settings
+  const hoursPerDay = parseInt(elements.ganttHoursPerDay.value) || 8;
+  const daysCount = parseInt(elements.ganttDaysCount.value) || 14;
+  const skipWeekends = elements.ganttSkipWeekends.checked;
+
   const allTasks = [];
   let taskIndex = 0;
 
@@ -1839,20 +2041,28 @@ function renderGantt() {
     }
   }
 
-  // Generate 14 days from today
+  // Generate days from today
   const days = [];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  for (let i = 0; i < 14; i++) {
+  let dayOffset = 0;
+  while (days.length < daysCount) {
     const d = new Date(today);
-    d.setDate(d.getDate() + i);
-    days.push({
-      date: d,
-      label: `${d.getDate()}.${d.getMonth() + 1}`,
-      isWeekend: d.getDay() === 0 || d.getDay() === 6,
-      isToday: i === 0
-    });
+    d.setDate(d.getDate() + dayOffset);
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+
+    // Skip weekends if option is enabled
+    if (!skipWeekends || !isWeekend) {
+      days.push({
+        date: d,
+        label: `${d.getDate()}.${d.getMonth() + 1}`,
+        isWeekend: isWeekend,
+        isToday: dayOffset === 0,
+        dayIndex: days.length
+      });
+    }
+    dayOffset++;
   }
 
   // Render header
@@ -1860,33 +2070,68 @@ function renderGantt() {
     `<div class="gantt-day ${d.isWeekend ? 'weekend' : ''} ${d.isToday ? 'today' : ''}">${d.label}</div>`
   ).join('');
 
-  // Render rows
-  let currentDay = 0;
+  // Render rows - schedule tasks sequentially
+  let currentHours = 0; // Track hours used
   elements.ganttBody.innerHTML = allTasks.map(task => {
-    // Calculate bar position based on task index (simplified scheduling)
-    const startDay = currentDay;
-    const duration = Math.ceil(task.estimatedHours / 4) || 1; // 4 hours = 1 day
-    currentDay = (currentDay + duration) % 14;
+    const taskHours = task.estimatedHours || 1;
 
-    const barLeft = startDay * 40 + 4;
-    const barWidth = Math.max(duration * 40 - 8, 32);
+    // Calculate start day based on accumulated hours
+    const startDay = Math.floor(currentHours / hoursPerDay);
+    const startHourInDay = currentHours % hoursPerDay;
+
+    // Calculate duration in days (can span multiple days)
+    const remainingHoursFirstDay = hoursPerDay - startHourInDay;
+    let durationDays;
+    if (taskHours <= remainingHoursFirstDay) {
+      durationDays = 1;
+    } else {
+      durationDays = 1 + Math.ceil((taskHours - remainingHoursFirstDay) / hoursPerDay);
+    }
+
+    // Update current hours for next task
+    currentHours += taskHours;
+
+    // Calculate bar position (40px per day)
+    const dayWidth = 40;
+    const barLeft = startDay * dayWidth + (startHourInDay / hoursPerDay) * dayWidth + 2;
+    const barWidth = Math.max((taskHours / hoursPerDay) * dayWidth - 4, 28);
+
+    // Check if task is within visible range
+    if (startDay >= daysCount) {
+      return ''; // Task is beyond visible range
+    }
 
     return `
       <div class="gantt-row">
-        <div class="gantt-row-task" title="${escapeHtml(task.title)}">
+        <div class="gantt-row-task" title="${escapeHtml(task.title)} (${taskHours}h)">
           <span class="priority-indicator ${task.priority || 'medium'}" style="display: inline-block; margin-right: 6px;"></span>
           ${escapeHtml(task.title)}
         </div>
         <div class="gantt-row-timeline">
           ${days.map(d => `<div class="gantt-row-cell ${d.isWeekend ? 'weekend' : ''}"></div>`).join('')}
           <div class="gantt-bar ${task.completed ? 'completed' : ''} priority-${task.priority || 'medium'}"
-               style="left: ${barLeft}px; width: ${barWidth}px;">
-            ${task.estimatedHours}h
+               style="left: ${barLeft}px; width: ${barWidth}px;"
+               title="${taskHours}h - Tag ${startDay + 1}">
+            ${taskHours}h
           </div>
         </div>
       </div>
     `;
   }).join('');
+
+  // Show total project duration
+  const totalHours = allTasks.reduce((sum, t) => sum + (t.estimatedHours || 0), 0);
+  const totalDays = Math.ceil(totalHours / hoursPerDay);
+  const summaryEl = document.getElementById('gantt-summary');
+  if (!summaryEl) {
+    const summary = document.createElement('div');
+    summary.id = 'gantt-summary';
+    summary.className = 'gantt-summary';
+    elements.ganttContainer.appendChild(summary);
+  }
+  document.getElementById('gantt-summary').innerHTML = `
+    <strong>Gesamt:</strong> ${totalHours}h = ${totalDays} Arbeitstage (bei ${hoursPerDay}h/Tag)
+  `;
 }
 
 // Drag and Drop for Milestones/Tasks
@@ -1936,6 +2181,486 @@ window.handleMilestoneDrop = function(e, targetMilestoneId) {
   renderProject();
   showToast('Meilenstein verschoben');
 };
+
+// ============== NEW CHART FEATURES ==============
+
+// CSV Export
+async function exportCSV() {
+  if (!currentProject) {
+    showToast('Kein Projekt ausgewählt', 'warning');
+    return;
+  }
+
+  let csv = 'Meilenstein,Task,Beschreibung,Status,Priorität,Stunden,Tags\n';
+
+  for (const milestone of currentProject.milestones || []) {
+    for (const task of milestone.tasks || []) {
+      const status = task.completed ? 'Erledigt' : 'Offen';
+      const priority = task.priority || 'medium';
+      const tags = (task.tags || []).join(';');
+      const desc = (task.description || '').replace(/"/g, '""');
+      csv += `"${milestone.name}","${task.title}","${desc}","${status}","${priority}",${task.estimatedHours || 0},"${tags}"\n`;
+    }
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${currentProject.name}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast('CSV exportiert!');
+}
+
+// Burndown Chart
+function renderBurndown() {
+  if (!currentProject) return;
+
+  const chartEl = document.getElementById('burndown-chart');
+  if (!chartEl) return;
+
+  let totalHours = 0;
+  let completedHours = 0;
+  let totalTasks = 0;
+  let completedTasks = 0;
+
+  for (const milestone of currentProject.milestones || []) {
+    for (const task of milestone.tasks || []) {
+      totalHours += task.estimatedHours || 0;
+      totalTasks++;
+      if (task.completed) {
+        completedHours += task.estimatedHours || 0;
+        completedTasks++;
+      }
+    }
+  }
+
+  const chartWidth = chartEl.offsetWidth - 80;
+  const chartHeight = 260;
+  const padding = { top: 20, right: 20, bottom: 40, left: 50 };
+
+  // Simulate sprint days (14 days default)
+  const days = 14;
+  const idealDecrement = totalHours / days;
+
+  // Generate data points
+  const idealData = [];
+  const actualData = [];
+
+  for (let i = 0; i <= days; i++) {
+    idealData.push(totalHours - (idealDecrement * i));
+    // Simulate progress based on completed percentage
+    const progress = completedHours / totalHours || 0;
+    const currentDay = Math.floor(days * progress);
+    if (i <= currentDay) {
+      actualData.push(totalHours - (completedHours * (i / Math.max(currentDay, 1))));
+    } else {
+      actualData.push(totalHours - completedHours);
+    }
+  }
+
+  // Calculate scale
+  const xScale = (chartWidth - padding.left - padding.right) / days;
+  const yScale = (chartHeight - padding.top - padding.bottom) / Math.max(totalHours, 1);
+
+  // Generate SVG paths
+  let idealPath = `M ${padding.left} ${padding.top + (totalHours - idealData[0]) * yScale}`;
+  let actualPath = `M ${padding.left} ${padding.top + (totalHours - actualData[0]) * yScale}`;
+  let areaPath = actualPath;
+
+  for (let i = 1; i <= days; i++) {
+    const x = padding.left + i * xScale;
+    idealPath += ` L ${x} ${padding.top + (totalHours - idealData[i]) * yScale}`;
+    actualPath += ` L ${x} ${padding.top + (totalHours - actualData[i]) * yScale}`;
+    areaPath += ` L ${x} ${padding.top + (totalHours - actualData[i]) * yScale}`;
+  }
+
+  // Close area path
+  areaPath += ` L ${padding.left + days * xScale} ${chartHeight - padding.bottom}`;
+  areaPath += ` L ${padding.left} ${chartHeight - padding.bottom} Z`;
+
+  // Generate grid lines
+  let gridLines = '';
+  const gridSteps = 5;
+  for (let i = 0; i <= gridSteps; i++) {
+    const y = padding.top + (i / gridSteps) * (chartHeight - padding.top - padding.bottom);
+    const value = Math.round(totalHours * (1 - i / gridSteps));
+    gridLines += `<line x1="${padding.left}" y1="${y}" x2="${chartWidth}" y2="${y}" stroke="var(--border-color)" stroke-width="1"/>`;
+    gridLines += `<text x="${padding.left - 10}" y="${y + 4}" fill="var(--text-muted)" font-size="11" text-anchor="end">${value}h</text>`;
+  }
+
+  // Generate x-axis labels
+  let xLabels = '';
+  for (let i = 0; i <= days; i += 2) {
+    const x = padding.left + i * xScale;
+    xLabels += `<text x="${x}" y="${chartHeight - 10}" fill="var(--text-muted)" font-size="11" text-anchor="middle">Tag ${i}</text>`;
+  }
+
+  chartEl.innerHTML = `
+    <svg width="100%" height="${chartHeight}" viewBox="0 0 ${chartWidth + 40} ${chartHeight}">
+      <defs>
+        <linearGradient id="burndownGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="var(--accent-primary)" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="var(--accent-primary)" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      ${gridLines}
+      <path d="${areaPath}" fill="url(#burndownGradient)"/>
+      <path d="${idealPath}" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-dasharray="8,4"/>
+      <path d="${actualPath}" fill="none" stroke="var(--accent-primary)" stroke-width="3" style="filter: drop-shadow(0 0 6px var(--accent-glow));"/>
+      ${xLabels}
+    </svg>
+    <div style="text-align: center; margin-top: 16px; color: var(--text-secondary);">
+      <strong style="color: var(--accent-primary);">${completedHours}h</strong> von <strong>${totalHours}h</strong> erledigt
+      (${totalTasks > 0 ? Math.round(completedTasks / totalTasks * 100) : 0}%)
+    </div>
+  `;
+}
+
+// Milestone Timeline
+function renderTimeline() {
+  if (!currentProject) return;
+
+  const container = document.getElementById('timeline-content');
+  if (!container) return;
+
+  const hoursPerDay = parseInt(elements.ganttHoursPerDay?.value) || 8;
+  let accumulatedHours = 0;
+  const today = new Date();
+
+  let html = '<div class="timeline-line"></div>';
+
+  for (const milestone of currentProject.milestones || []) {
+    let milestoneHours = 0;
+    let completedHours = 0;
+    let totalTasks = milestone.tasks?.length || 0;
+    let completedTasks = 0;
+
+    for (const task of milestone.tasks || []) {
+      milestoneHours += task.estimatedHours || 0;
+      if (task.completed) {
+        completedHours += task.estimatedHours || 0;
+        completedTasks++;
+      }
+    }
+
+    const progress = milestoneHours > 0 ? Math.round(completedHours / milestoneHours * 100) : 0;
+    const daysFromStart = Math.ceil(accumulatedHours / hoursPerDay);
+    const endDate = new Date(today);
+    endDate.setDate(endDate.getDate() + daysFromStart);
+
+    let statusClass = '';
+    if (progress === 100) statusClass = 'completed';
+    else if (progress > 0) statusClass = 'in-progress';
+
+    html += `
+      <div class="timeline-item ${statusClass}">
+        <div class="timeline-dot"></div>
+        <div class="timeline-item-header">
+          <span class="timeline-item-title">${escapeHtml(milestone.name)}</span>
+          <span class="timeline-item-date">${endDate.toLocaleDateString('de-DE')}</span>
+        </div>
+        <div class="timeline-item-tasks">${completedTasks}/${totalTasks} Tasks • ${milestoneHours}h geschätzt</div>
+        <div class="timeline-item-progress">
+          <div class="timeline-progress-bar">
+            <div class="timeline-progress-fill" style="width: ${progress}%;"></div>
+          </div>
+          <span class="timeline-progress-text">${progress}%</span>
+        </div>
+      </div>
+    `;
+
+    accumulatedHours += milestoneHours;
+  }
+
+  container.innerHTML = html;
+}
+
+// Heatmap
+function showHeatmap() {
+  const modal = document.getElementById('heatmap-modal');
+  const grid = document.getElementById('heatmap-grid');
+  if (!modal || !grid) return;
+
+  modal.classList.remove('hidden');
+
+  // Generate mock heatmap data (in a real app, this would come from time tracking)
+  const days = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+  const hours = Array.from({length: 12}, (_, i) => i + 8); // 8:00 - 19:00
+
+  // Aggregate tracked time from tasks
+  const heatData = {};
+  if (currentProject) {
+    for (const milestone of currentProject.milestones || []) {
+      for (const task of milestone.tasks || []) {
+        if (task.timerSeconds > 0) {
+          // Distribute randomly for demo purposes
+          const day = Math.floor(Math.random() * 7);
+          const hour = Math.floor(Math.random() * 12) + 8;
+          const key = `${day}-${hour}`;
+          heatData[key] = (heatData[key] || 0) + task.timerSeconds / 3600;
+        }
+      }
+    }
+  }
+
+  const maxValue = Math.max(...Object.values(heatData), 1);
+
+  let html = `<div class="heatmap-hours">`;
+  for (const h of hours) {
+    html += `<div class="heatmap-hour">${h}</div>`;
+  }
+  html += '</div>';
+
+  for (let d = 0; d < days.length; d++) {
+    html += `<div class="heatmap-row">
+      <div class="heatmap-label">${days[d]}</div>
+      <div class="heatmap-cells">`;
+
+    for (const h of hours) {
+      const key = `${d}-${h}`;
+      const value = heatData[key] || 0;
+      const level = value === 0 ? 0 : Math.min(4, Math.ceil((value / maxValue) * 4));
+      html += `<div class="heatmap-cell level-${level}" title="${days[d]} ${h}:00 - ${value.toFixed(1)}h"></div>`;
+    }
+
+    html += '</div></div>';
+  }
+
+  grid.innerHTML = html;
+}
+
+// Dependency Graph
+function showDependencyGraph() {
+  const modal = document.getElementById('dependency-modal');
+  const graph = document.getElementById('dependency-graph');
+  if (!modal || !graph || !currentProject) {
+    showToast('Kein Projekt ausgewählt', 'warning');
+    return;
+  }
+
+  modal.classList.remove('hidden');
+
+  let html = '';
+
+  for (const milestone of currentProject.milestones || []) {
+    html += `
+      <div class="dependency-milestone">
+        <div class="dependency-milestone-title">
+          📁 ${escapeHtml(milestone.name)}
+        </div>
+        <div class="dependency-tasks">
+    `;
+
+    const tasks = milestone.tasks || [];
+    for (let i = 0; i < tasks.length; i++) {
+      const task = tasks[i];
+      const hasNext = i < tasks.length - 1;
+
+      html += `
+        <div class="dependency-task ${task.completed ? 'completed' : ''}">
+          <div class="dependency-task-title">
+            <span class="priority-indicator ${task.priority || 'medium'}"></span>
+            ${escapeHtml(task.title)}
+          </div>
+          <div class="dependency-task-meta">
+            <span>⏱️ ${task.estimatedHours}h</span>
+            <span>${task.completed ? '✅' : '○'}</span>
+          </div>
+          ${hasNext ? '<div class="dependency-arrow"></div>' : ''}
+        </div>
+      `;
+    }
+
+    html += '</div></div>';
+  }
+
+  graph.innerHTML = html;
+}
+
+// Sprint Planning
+let sprintPlan = null;
+
+async function generateSprintPlan() {
+  if (!currentProject) {
+    showToast('Kein Projekt ausgewählt', 'warning');
+    return;
+  }
+
+  const duration = parseInt(document.getElementById('sprint-duration').value) || 14;
+  const hoursPerDay = parseInt(document.getElementById('sprint-hours').value) || 8;
+  const totalSprintHours = duration * hoursPerDay;
+
+  const loading = document.getElementById('sprint-loading');
+  const result = document.getElementById('sprint-result');
+  const applyBtn = document.getElementById('apply-sprint-btn');
+
+  loading.classList.remove('hidden');
+  result.classList.add('hidden');
+  applyBtn.classList.add('hidden');
+
+  try {
+    const response = await window.electronAPI.planSprint({
+      project: currentProject,
+      sprintDays: duration,
+      hoursPerDay: hoursPerDay
+    });
+
+    loading.classList.add('hidden');
+
+    if (response.error) {
+      showToast(response.error, 'error');
+      return;
+    }
+
+    sprintPlan = response.tasks || [];
+    const totalHours = sprintPlan.reduce((sum, t) => sum + (t.hours || 0), 0);
+
+    let html = `
+      <div class="sprint-info">
+        <div class="sprint-stat">
+          <div class="sprint-stat-label">Sprint-Kapazität</div>
+          <div class="sprint-stat-value">${totalSprintHours}h</div>
+        </div>
+        <div class="sprint-stat">
+          <div class="sprint-stat-label">Geplante Tasks</div>
+          <div class="sprint-stat-value">${sprintPlan.length}</div>
+        </div>
+        <div class="sprint-stat">
+          <div class="sprint-stat-label">Geschätzte Zeit</div>
+          <div class="sprint-stat-value">${totalHours}h</div>
+        </div>
+      </div>
+      <h4 style="margin-bottom: 14px;">Empfohlene Reihenfolge:</h4>
+      <div class="sprint-tasks">
+    `;
+
+    sprintPlan.forEach((task, idx) => {
+      html += `
+        <div class="sprint-task-item">
+          <div class="sprint-task-order">${idx + 1}</div>
+          <div class="sprint-task-info">
+            <div class="sprint-task-title">${escapeHtml(task.title)}</div>
+            <div class="sprint-task-reason">${escapeHtml(task.reason || '')}</div>
+          </div>
+          <div class="sprint-task-hours">${task.hours}h</div>
+        </div>
+      `;
+    });
+
+    html += '</div>';
+    result.innerHTML = html;
+    result.classList.remove('hidden');
+    applyBtn.classList.remove('hidden');
+  } catch (e) {
+    loading.classList.add('hidden');
+    showToast('Fehler bei der Sprint-Planung', 'error');
+  }
+}
+
+function applySprintPlan() {
+  if (!sprintPlan || !currentProject) return;
+
+  // Mark sprint tasks as "in sprint" or reorder
+  const sprintTaskIds = sprintPlan.map(t => t.taskId);
+
+  for (const milestone of currentProject.milestones || []) {
+    for (const task of milestone.tasks || []) {
+      if (sprintTaskIds.includes(task.id)) {
+        task.status = 'inprogress';
+        if (!task.tags) task.tags = [];
+        if (!task.tags.includes('sprint')) {
+          task.tags.push('sprint');
+        }
+      }
+    }
+  }
+
+  document.getElementById('sprint-modal').classList.add('hidden');
+  showToast('Sprint-Plan übernommen!');
+  renderProject();
+}
+
+// Auto Tags
+let autoTagData = null;
+
+async function generateAutoTags() {
+  if (!currentProject) {
+    showToast('Kein Projekt ausgewählt', 'warning');
+    return;
+  }
+
+  const modal = document.getElementById('autotag-modal');
+  const loading = document.getElementById('autotag-loading');
+  const preview = document.getElementById('autotag-preview');
+
+  modal.classList.remove('hidden');
+  loading.classList.remove('hidden');
+  preview.innerHTML = '';
+
+  try {
+    const response = await window.electronAPI.autoTagTasks({
+      project: currentProject
+    });
+
+    loading.classList.add('hidden');
+
+    if (response.error) {
+      showToast(response.error, 'error');
+      modal.classList.add('hidden');
+      return;
+    }
+
+    autoTagData = response.tags || [];
+
+    let html = '';
+    for (const item of autoTagData) {
+      html += `
+        <div class="autotag-item">
+          <span class="autotag-task-title">${escapeHtml(item.title)}</span>
+          <div class="autotag-tags">
+            ${(item.suggestedTags || []).map(tag =>
+              `<span class="autotag-tag-new">${tag}</span>`
+            ).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    preview.innerHTML = html || '<p style="color: var(--text-muted); text-align: center;">Keine Tag-Vorschläge verfügbar</p>';
+  } catch (e) {
+    loading.classList.add('hidden');
+    showToast('Fehler beim Generieren der Tags', 'error');
+    modal.classList.add('hidden');
+  }
+}
+
+function applyAutoTags() {
+  if (!autoTagData || !currentProject) return;
+
+  for (const tagItem of autoTagData) {
+    for (const milestone of currentProject.milestones || []) {
+      for (const task of milestone.tasks || []) {
+        if (task.id === tagItem.taskId || task.title === tagItem.title) {
+          if (!task.tags) task.tags = [];
+          for (const newTag of tagItem.suggestedTags || []) {
+            if (!task.tags.includes(newTag)) {
+              task.tags.push(newTag);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  document.getElementById('autotag-modal').classList.add('hidden');
+  showToast('Tags übernommen!');
+  renderProject();
+}
 
 // Start
 init();

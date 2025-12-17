@@ -649,3 +649,170 @@ ipcMain.handle('get-time-tracking', () => {
     return {};
   }
 });
+
+// AI Sprint Planning
+ipcMain.handle('plan-sprint', async (event, { project, sprintDays, hoursPerDay }) => {
+  if (!groqClient) {
+    return { error: 'Groq API key not configured' };
+  }
+
+  try {
+    const totalSprintHours = sprintDays * hoursPerDay;
+
+    // Collect open tasks
+    const openTasks = [];
+    for (const milestone of project.milestones || []) {
+      for (const task of milestone.tasks || []) {
+        if (!task.completed) {
+          openTasks.push({
+            id: task.id,
+            title: task.title,
+            description: task.description || '',
+            priority: task.priority || 'medium',
+            hours: task.estimatedHours || 1,
+            milestone: milestone.name
+          });
+        }
+      }
+    }
+
+    if (openTasks.length === 0) {
+      return { tasks: [], message: 'Keine offenen Tasks vorhanden' };
+    }
+
+    const systemPrompt = `Du bist ein erfahrener Scrum Master. Plane einen Sprint mit optimaler Task-Reihenfolge.
+
+Antworte AUSSCHLIESSLICH mit validem JSON:
+
+{
+  "tasks": [
+    {
+      "taskId": "task-uuid",
+      "title": "Task Name",
+      "hours": 2,
+      "reason": "Kurze Begründung warum dieser Task in dieser Reihenfolge"
+    }
+  ]
+}
+
+Richtlinien:
+- Priorisiere nach: Priorität (high > medium > low), Abhängigkeiten, Milestone-Reihenfolge
+- Wähle Tasks bis die Sprint-Kapazität (${totalSprintHours}h) erreicht ist
+- Sortiere nach optimaler Bearbeitungsreihenfolge
+- Gib kurze Begründungen für die Reihenfolge`;
+
+    const taskList = openTasks.map(t =>
+      `- [${t.id}] ${t.title} (${t.priority}, ${t.hours}h, ${t.milestone})`
+    ).join('\n');
+
+    const userPrompt = `Sprint-Kapazität: ${totalSprintHours}h (${sprintDays} Tage × ${hoursPerDay}h/Tag)
+
+Offene Tasks:
+${taskList}
+
+Plane den optimalen Sprint.`;
+
+    const response = await groqClient.chat.completions.create({
+      model: currentModelName,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 2000
+    });
+
+    const content = response.choices[0].message.content;
+    let jsonStr = content;
+    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) jsonStr = jsonMatch[1].trim();
+    const objectMatch = jsonStr.match(/\{[\s\S]*\}/);
+    if (objectMatch) jsonStr = objectMatch[0];
+
+    const parsed = JSON.parse(jsonStr);
+    return { tasks: parsed.tasks || [] };
+  } catch (error) {
+    console.error('Sprint planning error:', error);
+    return { error: error.message };
+  }
+});
+
+// AI Auto-Tag Tasks
+ipcMain.handle('auto-tag-tasks', async (event, { project }) => {
+  if (!groqClient) {
+    return { error: 'Groq API key not configured' };
+  }
+
+  try {
+    // Collect all tasks
+    const allTasks = [];
+    for (const milestone of project.milestones || []) {
+      for (const task of milestone.tasks || []) {
+        allTasks.push({
+          id: task.id,
+          title: task.title,
+          description: task.description || '',
+          existingTags: task.tags || []
+        });
+      }
+    }
+
+    if (allTasks.length === 0) {
+      return { tags: [] };
+    }
+
+    const systemPrompt = `Du bist ein erfahrener Entwickler. Kategorisiere Tasks mit passenden Tags.
+
+Verfügbare Tags: frontend, backend, api, database, ui, ux, bug, feature, test, docs, security, performance, refactor, setup, deploy
+
+Antworte AUSSCHLIESSLICH mit validem JSON:
+
+{
+  "tags": [
+    {
+      "taskId": "task-uuid",
+      "title": "Task Name",
+      "suggestedTags": ["tag1", "tag2"]
+    }
+  ]
+}
+
+Richtlinien:
+- Analysiere Titel und Beschreibung
+- Wähle 1-3 passende Tags pro Task
+- Überspringe Tasks die bereits gute Tags haben
+- Sei präzise und konsistent`;
+
+    const taskList = allTasks.map(t =>
+      `- [${t.id}] ${t.title}${t.description ? ': ' + t.description : ''} (Existing: ${t.existingTags.join(', ') || 'none'})`
+    ).join('\n');
+
+    const userPrompt = `Projekt: ${project.name}
+
+Tasks zum Kategorisieren:
+${taskList}`;
+
+    const response = await groqClient.chat.completions.create({
+      model: currentModelName,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.5,
+      max_tokens: 2000
+    });
+
+    const content = response.choices[0].message.content;
+    let jsonStr = content;
+    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) jsonStr = jsonMatch[1].trim();
+    const objectMatch = jsonStr.match(/\{[\s\S]*\}/);
+    if (objectMatch) jsonStr = objectMatch[0];
+
+    const parsed = JSON.parse(jsonStr);
+    return { tags: parsed.tags || [] };
+  } catch (error) {
+    console.error('Auto-tag error:', error);
+    return { error: error.message };
+  }
+});
