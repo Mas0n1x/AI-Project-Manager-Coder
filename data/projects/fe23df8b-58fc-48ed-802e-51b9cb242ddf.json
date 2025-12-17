@@ -1,0 +1,365 @@
+{
+  "id": "fe23df8b-58fc-48ed-802e-51b9cb242ddf",
+  "name": "GTA RP Medicsystem",
+  "description": "bau mir ein medic system für gta rp",
+  "createdAt": "2025-12-17T04:20:56.541Z",
+  "updatedAt": "2025-12-17T04:22:47.499Z",
+  "milestones": [
+    {
+      "id": "c2e38c83-a4dd-4e16-862e-a1e3543b129c",
+      "name": "Anforderungsanalyse und Planung",
+      "tasks": [
+        {
+          "id": "56600870-9891-4fa0-a630-ad92a8cad5b6",
+          "title": "Anforderungen sammeln",
+          "description": "Sammeln der Anforderungen für das Medicsystem",
+          "estimatedHours": 0.5,
+          "completed": false,
+          "priority": "medium",
+          "tags": [
+            "docs",
+            "setup"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo"
+        },
+        {
+          "id": "c65b1368-b678-4c35-9a1b-3c594f211f43",
+          "title": "Technologie-Auswahl",
+          "description": "Auswahl der geeigneten Technologien für das Projekt",
+          "estimatedHours": 0.25,
+          "completed": false,
+          "priority": "medium",
+          "tags": [
+            "setup",
+            "backend"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo"
+        },
+        {
+          "id": "70103187-5171-4e39-8456-b0ec2b8e25f0",
+          "title": "Projektplanung",
+          "description": "Erstellung eines detaillierten Projektplans",
+          "estimatedHours": 1,
+          "completed": false,
+          "priority": "medium",
+          "tags": [
+            "setup",
+            "docs"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "2c09c389-b240-4976-a69f-533182c1cdbd",
+      "name": "Implementierung der Grundfunktionen",
+      "tasks": [
+        {
+          "id": "b8f59cf3-d1be-41c5-852a-78bb31401dbc",
+          "title": "Implementierung der Spieler-Verletzungsmechanik",
+          "description": "Implementierung der Mechanik, die die Verletzungen der Spieler simuliert",
+          "estimatedHours": 1,
+          "completed": false,
+          "priority": "medium",
+          "tags": [
+            "backend",
+            "feature"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo"
+        },
+        {
+          "id": "f6db5282-ade7-4104-abdc-1d3ad885dac5",
+          "title": "Implementierung der Medikamente und Behandlungen",
+          "description": "Implementierung der verschiedenen Medikamente und Behandlungen",
+          "estimatedHours": 1.5,
+          "completed": false,
+          "priority": "medium",
+          "tags": [
+            "backend",
+            "feature"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo"
+        },
+        {
+          "id": "8ff94e04-56bf-493d-802c-651589464773",
+          "title": "Implementierung der Sanitätsfahrzeuge",
+          "description": "Implementierung der Sanitätsfahrzeuge und ihrer Funktionalitäten",
+          "estimatedHours": 1,
+          "completed": false,
+          "priority": "medium",
+          "tags": [
+            "backend",
+            "feature"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "325f6311-26f1-4ea6-8bc0-79dcea1cb832",
+      "name": "Implementierung der Fortgeschrittenen Funktionen",
+      "tasks": [
+        {
+          "id": "1baca1b1-ce2a-47dd-b92c-a21ca09ae870",
+          "title": "Implementierung der Blutgruppen und Transfusionen",
+          "description": "Implementierung der Blutgruppen und Transfusionen",
+          "estimatedHours": 1.5,
+          "completed": false,
+          "priority": "medium",
+          "tags": [
+            "backend",
+            "feature"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo"
+        },
+        {
+          "id": "d590465a-3c13-4bcc-ac87-c44e69b10d99",
+          "title": "Implementierung der Operationen und Eingriffe",
+          "description": "Implementierung der Operationen und Eingriffe",
+          "estimatedHours": 2,
+          "completed": false,
+          "priority": "medium",
+          "tags": [
+            "backend",
+            "feature"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo"
+        },
+        {
+          "id": "75df4645-00a4-4c8d-bc6b-ce66ade0015b",
+          "title": "Implementierung der Medizinischen Ausrüstung",
+          "description": "Implementierung der medizinischen Ausrüstung wie Defibrillatoren und Beatmungsgeräte",
+          "estimatedHours": 1,
+          "completed": false,
+          "priority": "medium",
+          "tags": [
+            "backend",
+            "feature"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "804922b5-593d-4e2e-876e-32e6fa95ac59",
+      "name": "Testing und Debugging",
+      "tasks": [
+        {
+          "id": "38d066d9-9cd2-4004-9709-399a498ae7ff",
+          "title": "Testen der Grundfunktionen",
+          "description": "Testen der grundlegenden Funktionen des Medicsystems",
+          "estimatedHours": 1,
+          "completed": false,
+          "priority": "medium",
+          "tags": [
+            "test",
+            "backend"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo"
+        },
+        {
+          "id": "1081e8dc-2f2b-4538-b05e-fffbb5d25e30",
+          "title": "Testen der Fortgeschrittenen Funktionen",
+          "description": "Testen der fortgeschrittenen Funktionen des Medicsystems",
+          "estimatedHours": 1.5,
+          "completed": false,
+          "priority": "medium",
+          "tags": [
+            "test",
+            "backend"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo"
+        },
+        {
+          "id": "a1cff05a-2e39-4006-877c-a3f08bd57e8b",
+          "title": "Debugging und Fehlerbehebung",
+          "description": "Behebung von Fehlern und Bugs im Medicsystem",
+          "estimatedHours": 2,
+          "completed": false,
+          "priority": "medium",
+          "tags": [
+            "bug",
+            "backend"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "048ed77e-f029-42ca-891f-8e35b966dc86",
+      "name": "Abschluss und Deployment",
+      "tasks": [
+        {
+          "id": "055c48f2-cbf0-4507-bbe9-78106d5048bf",
+          "title": "Finalisierung des Medicsystems",
+          "description": "Finalisierung des Medicsystems und Vorbereitung auf den Einsatz",
+          "estimatedHours": 0.5,
+          "completed": false,
+          "priority": "medium",
+          "tags": [
+            "setup",
+            "deploy"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo"
+        },
+        {
+          "id": "cdad6ae2-a334-4865-ac85-b7774fa90bca",
+          "title": "Deployment auf den Server",
+          "description": "Deployment des Medicsystems auf den GTA RP-Server",
+          "estimatedHours": 0.25,
+          "completed": false,
+          "priority": "medium",
+          "tags": [
+            "deploy",
+            "backend"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo"
+        },
+        {
+          "id": "1e4a6f5a-d519-4802-97f8-abcc69f9ec0a",
+          "title": "Dokumentation und Wartung",
+          "description": "Erstellung von Dokumentationen und Wartung des Medicsystems",
+          "estimatedHours": 1,
+          "completed": false,
+          "priority": "medium",
+          "tags": [
+            "docs",
+            "setup"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "ffa68148-2fce-484d-9e8e-77eed2720780",
+      "name": "Zusätzliche Features",
+      "tasks": [
+        {
+          "id": "758b6b2e-d36b-4356-8186-6cf062d0f8d8",
+          "title": "Medikamentenverwaltung",
+          "description": "Ein System zum Verwalten von Medikamenten, einschließlich Namen, Dosierungen und Wirkungen",
+          "estimatedHours": 1.5,
+          "priority": "low",
+          "tags": [
+            "feature"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo",
+          "completed": false
+        },
+        {
+          "id": "6b5e8d57-880a-4871-9e56-5831b6c918ea",
+          "title": "Behandlungsprotokoll",
+          "description": "Ein System zum Erstellen und Verwalten von Behandlungsprotokollen für Patienten",
+          "estimatedHours": 2,
+          "priority": "medium",
+          "tags": [
+            "feature"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo",
+          "completed": false
+        },
+        {
+          "id": "c0e3cdd9-1a22-43f7-9811-9e3bfe13c0d7",
+          "title": "Sanitäter-Verwaltung",
+          "description": "Ein System zum Verwalten von Sanitätern, einschließlich ihrer Fähigkeiten und Verfügbarkeit",
+          "estimatedHours": 1,
+          "priority": "low",
+          "tags": [
+            "feature"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo",
+          "completed": false
+        },
+        {
+          "id": "d3a67a67-321b-4fc4-99ab-748a4320f582",
+          "title": "Statistiken und Berichte",
+          "description": "Ein System zum Erstellen von Statistiken und Berichten über Patienten, Behandlungen und Rettungswagen-Einsätze",
+          "estimatedHours": 4,
+          "priority": "high",
+          "tags": [
+            "feature"
+          ],
+          "notes": "",
+          "subtasks": [],
+          "reminder": null,
+          "timerSeconds": 0,
+          "status": "todo",
+          "completed": false
+        }
+      ]
+    }
+  ],
+  "totalEstimatedHours": 24.5
+}

@@ -522,6 +522,44 @@
     </div>
   </div>
 
+  <!-- Prompt Generator Modal -->
+  <div id="prompt-modal" class="modal hidden">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2>📋 Claude Code Prompt Generator</h2>
+        <button id="close-prompt" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="prompt-task-info" id="prompt-task-info"></div>
+        <div class="prompt-options">
+          <div class="form-group">
+            <label>Prompt-Stil:</label>
+            <select id="prompt-style" class="form-select">
+              <option value="detailed">Detailliert (mit Kontext)</option>
+              <option value="minimal">Minimal (nur Task)</option>
+              <option value="stepbystep">Schritt-für-Schritt</option>
+              <option value="review">Code Review</option>
+              <option value="debug">Debugging</option>
+              <option value="test">Tests schreiben</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Zusätzlicher Kontext:</label>
+            <textarea id="prompt-extra-context" class="form-textarea" rows="2" placeholder="Zusätzliche Informationen für den Prompt..."></textarea>
+          </div>
+        </div>
+        <div class="prompt-output">
+          <label>Generierter Prompt:</label>
+          <textarea id="generated-prompt" class="form-textarea prompt-result" rows="12" readonly></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="regenerate-prompt-btn" class="btn btn-secondary">🔄 Neu generieren</button>
+        <button id="copy-prompt-btn" class="btn btn-primary">📋 Kopieren</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Auto Tags Modal -->
   <div id="autotag-modal" class="modal hidden">
     <div class="modal-content modal-lg">

@@ -4,7 +4,7 @@
   "description": "AI-powered local project manager that breaks down goals into tasks, milestones, and time estimates",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "node start.js",
     "build": "electron-builder --win dir",
     "build:installer": "electron-builder --win nsis"
   },
@@ -25,7 +25,9 @@
       {
         "from": "data",
         "to": "data",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
@@ -39,7 +41,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "electron": "^28.0.0",
+    "electron": "^39.2.7",
     "electron-builder": "^24.9.1"
   }
 }

@@ -997,7 +997,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  opacity: 0;
+  opacity: 0.3;
   transition: opacity var(--transition-fast);
 }
 
@@ -2722,6 +2722,84 @@ body {
 @keyframes tagPulse {
   0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
   50% { box-shadow: 0 0 10px var(--accent-glow); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Prompt Generator Styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.prompt-task-info {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border-color);
+}
+
+.prompt-task-info h4 {
+  color: var(--accent-primary);
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+}
+
+.prompt-task-info p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 4px 0;
+}
+
+.prompt-task-info .task-tags {
+  margin-top: 10px;
+}
+
+.prompt-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.prompt-output {
+  margin-top: 20px;
+}
+
+.prompt-output label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.prompt-result {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.9rem;
+  background: var(--bg-primary);
+  border: 2px solid var(--accent-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 250px;
+  resize: vertical;
+}
+
+.prompt-result:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-subtle), var(--shadow-glow);
+}
+
+.prompt-btn {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  border-color: #6366f1 !important;
+}
+
+.prompt-btn:hover {
+  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%) !important;
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.4) !important;
+}
+
+@media (max-width: 768px) {
+  .prompt-options {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {

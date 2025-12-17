@@ -848,8 +848,9 @@ function renderTask(task, milestoneId) {
         ${subtasksHtml}
       </div>
       <div class="task-actions">
-        <button class="task-action-btn" onclick="editTask('${milestoneId}', '${task.id}')">✏️</button>
-        <button class="task-action-btn" onclick="askAIAboutTask('${milestoneId}', '${task.id}')">🤖</button>
+        <button class="task-action-btn" onclick="editTask('${milestoneId}', '${task.id}')" title="Bearbeiten">✏️</button>
+        <button class="task-action-btn" onclick="askAIAboutTask('${milestoneId}', '${task.id}')" title="AI Hilfe">🤖</button>
+        <button class="task-action-btn prompt-btn" onclick="generatePrompt('${milestoneId}', '${task.id}')" title="Claude Code Prompt">📋</button>
       </div>
     </div>
   `;
@@ -2661,6 +2662,177 @@ function applyAutoTags() {
   showToast('Tags übernommen!');
   renderProject();
 }
+
+// ============== PROMPT GENERATOR ==============
+
+let currentPromptTask = null;
+let currentPromptMilestone = null;
+
+function generatePrompt(milestoneId, taskId) {
+  const milestone = currentProject.milestones.find(m => m.id === milestoneId);
+  if (!milestone) return;
+
+  const task = milestone.tasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  currentPromptTask = task;
+  currentPromptMilestone = milestone;
+
+  // Show task info
+  const taskInfoEl = document.getElementById('prompt-task-info');
+  const tags = (task.tags || []).map(t => `<span class="tag tag-${t}">${t}</span>`).join('');
+
+  taskInfoEl.innerHTML = `
+    <h4>${escapeHtml(task.title)}</h4>
+    <p><strong>Meilenstein:</strong> ${escapeHtml(milestone.name)}</p>
+    <p><strong>Beschreibung:</strong> ${task.description || 'Keine Beschreibung'}</p>
+    <p><strong>Geschätzte Zeit:</strong> ${task.estimatedHours}h</p>
+    ${tags ? `<div class="task-tags">${tags}</div>` : ''}
+  `;
+
+  // Generate initial prompt
+  updateGeneratedPrompt();
+
+  // Show modal
+  document.getElementById('prompt-modal').classList.remove('hidden');
+}
+
+function updateGeneratedPrompt() {
+  if (!currentPromptTask || !currentProject) return;
+
+  const style = document.getElementById('prompt-style').value;
+  const extraContext = document.getElementById('prompt-extra-context').value;
+
+  let prompt = '';
+
+  const taskInfo = `
+Task: ${currentPromptTask.title}
+Beschreibung: ${currentPromptTask.description || 'Keine'}
+Meilenstein: ${currentPromptMilestone.name}
+Projekt: ${currentProject.name}
+Geschätzte Zeit: ${currentPromptTask.estimatedHours}h
+Tags: ${(currentPromptTask.tags || []).join(', ') || 'Keine'}`.trim();
+
+  const subtasksInfo = (currentPromptTask.subtasks || []).length > 0
+    ? `\nSubtasks:\n${currentPromptTask.subtasks.map((st, i) => `${i + 1}. ${st.title}${st.completed ? ' (erledigt)' : ''}`).join('\n')}`
+    : '';
+
+  switch (style) {
+    case 'detailed':
+      prompt = `Ich arbeite an folgendem Task in meinem Projekt:
+
+${taskInfo}${subtasksInfo}
+
+Projektkontext: ${currentProject.description || 'Keine Beschreibung'}
+
+${extraContext ? `Zusätzlicher Kontext: ${extraContext}\n\n` : ''}Bitte hilf mir bei der Implementierung dieses Tasks. Erkläre deinen Ansatz und zeige den vollständigen Code mit Kommentaren.`;
+      break;
+
+    case 'minimal':
+      prompt = `Implementiere: ${currentPromptTask.title}
+
+${currentPromptTask.description || ''}${extraContext ? `\n\n${extraContext}` : ''}`;
+      break;
+
+    case 'stepbystep':
+      prompt = `Ich muss folgenden Task implementieren:
+
+${taskInfo}${subtasksInfo}
+
+${extraContext ? `Zusätzlicher Kontext: ${extraContext}\n\n` : ''}Bitte führe mich Schritt für Schritt durch die Implementierung:
+1. Erkläre zuerst den Ansatz
+2. Zeige dann jeden Schritt mit Code
+3. Erkläre wichtige Entscheidungen
+4. Gib Hinweise für Testing`;
+      break;
+
+    case 'review':
+      prompt = `Bitte überprüfe meinen Code für folgenden Task:
+
+${taskInfo}
+
+${extraContext ? `Code/Kontext: ${extraContext}\n\n` : ''}Bitte prüfe auf:
+- Bugs und Fehler
+- Performance-Probleme
+- Best Practices
+- Sicherheitslücken
+- Verbesserungsmöglichkeiten`;
+      break;
+
+    case 'debug':
+      prompt = `Ich habe ein Problem bei folgendem Task:
+
+${taskInfo}
+
+${extraContext ? `Fehlerbeschreibung/Code: ${extraContext}\n\n` : ''}Bitte hilf mir beim Debugging:
+1. Analysiere das Problem
+2. Erkläre mögliche Ursachen
+3. Zeige die Lösung
+4. Erkläre wie ich ähnliche Fehler in Zukunft vermeiden kann`;
+      break;
+
+    case 'test':
+      prompt = `Ich brauche Tests für folgenden Task:
+
+${taskInfo}
+
+${extraContext ? `Zusätzlicher Kontext: ${extraContext}\n\n` : ''}Bitte erstelle:
+1. Unit Tests für die Hauptfunktionalität
+2. Edge Cases und Grenzwerte
+3. Negative Tests (Fehlerbehandlung)
+4. Integration Tests falls nötig
+
+Nutze gängige Testing-Patterns und erkläre die Test-Strategie.`;
+      break;
+  }
+
+  document.getElementById('generated-prompt').value = prompt;
+}
+
+function copyPromptToClipboard() {
+  const promptText = document.getElementById('generated-prompt').value;
+
+  navigator.clipboard.writeText(promptText).then(() => {
+    showToast('Prompt in Zwischenablage kopiert!');
+  }).catch(() => {
+    // Fallback für ältere Browser
+    const textarea = document.getElementById('generated-prompt');
+    textarea.select();
+    document.execCommand('copy');
+    showToast('Prompt kopiert!');
+  });
+}
+
+// Event Listeners für Prompt Generator
+document.addEventListener('DOMContentLoaded', () => {
+  const closePromptBtn = document.getElementById('close-prompt');
+  const promptStyle = document.getElementById('prompt-style');
+  const promptExtraContext = document.getElementById('prompt-extra-context');
+  const regenerateBtn = document.getElementById('regenerate-prompt-btn');
+  const copyBtn = document.getElementById('copy-prompt-btn');
+
+  if (closePromptBtn) {
+    closePromptBtn.addEventListener('click', () => {
+      document.getElementById('prompt-modal').classList.add('hidden');
+    });
+  }
+
+  if (promptStyle) {
+    promptStyle.addEventListener('change', updateGeneratedPrompt);
+  }
+
+  if (promptExtraContext) {
+    promptExtraContext.addEventListener('input', updateGeneratedPrompt);
+  }
+
+  if (regenerateBtn) {
+    regenerateBtn.addEventListener('click', updateGeneratedPrompt);
+  }
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', copyPromptToClipboard);
+  }
+});
 
 // Start
 init();

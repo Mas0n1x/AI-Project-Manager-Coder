@@ -26,7 +26,15 @@
       "Bash(\"./node_modules/electron/dist/electron.exe\" -e \"const {app,BrowserWindow}=require(''electron'');console.log(''app:'',typeof app,''BW:'',typeof BrowserWindow)\")",
       "Bash(\"./electron-dist/electron.exe\" -e \"console.log(''process.type:'', process.type)\")",
       "Bash(\"./electron-dist/electron.exe\" .)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(node_modules/electron/dist/electron.exe:*)",
+      "Bash(xxd:*)",
+      "Bash(cmd.exe /c \"node_modules\\electron\\dist\\electron.exe --version\")",
+      "Bash(cmd.exe /c \"node_modules\\electron\\dist\\electron.exe -v\")",
+      "Bash(powershell -Command \"& ''.\\node_modules\\electron\\dist\\electron.exe'' ''--version''\")",
+      "Bash(./node_modules/electron/dist/electron.exe:*)",
+      "Bash(\"C:/Users/bleck/AppData/Roaming/npm/node_modules/electron/dist/electron.exe\" --version)",
+      "Bash(echo:*)"
     ]
   }
 }

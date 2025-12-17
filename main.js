@@ -3,6 +3,11 @@ const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
+// Data directories (initialized after app ready)
+let DATA_DIR;
+let PROJECTS_DIR;
+let SETTINGS_FILE;
+
 // Determine data directory (portable: next to exe, dev: in project)
 function getDataDir() {
   if (app.isPackaged) {
@@ -11,9 +16,11 @@ function getDataDir() {
   return path.join(__dirname, 'data');
 }
 
-const DATA_DIR = getDataDir();
-const PROJECTS_DIR = path.join(DATA_DIR, 'projects');
-const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
+function initDataPaths() {
+  DATA_DIR = getDataDir();
+  PROJECTS_DIR = path.join(DATA_DIR, 'projects');
+  SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
+}
 
 // Ensure directories exist
 function ensureDirectories() {
@@ -91,6 +98,7 @@ function createWindow() {
 
 // App ready
 app.whenReady().then(() => {
+  initDataPaths();
   ensureDirectories();
   loadSettings();
   createWindow();

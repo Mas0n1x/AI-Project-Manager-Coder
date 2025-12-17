@@ -10,6 +10,7 @@ Eine Electron Desktop-App, die Projektziele mithilfe von AI (Groq API) in strukt
 - **AI Chat**: Direkter Chat mit der AI für Hilfe bei Tasks und Fragen
 - **AI Sprint-Planung**: AI plant optimale Sprint-Reihenfolge basierend auf Prioritäten und Kapazität
 - **Automatische Tags**: AI kategorisiert Tasks automatisch mit passenden Tags
+- **Claude Code Prompt Generator**: Generiert optimierte Prompts für AI-Coding-Tools pro Task
 
 ### Ansichten
 - **Listen-Ansicht**: Klassische hierarchische Darstellung mit Meilensteinen und Tasks
@@ -26,6 +27,7 @@ Eine Electron Desktop-App, die Projektziele mithilfe von AI (Groq API) in strukt
 - **Timer**: Zeiterfassung pro Task mit Start/Stop/Reset
 - **Notizen**: Zusätzliche Informationen pro Task
 - **Erinnerungen**: Datum/Zeit-basierte Erinnerungen
+- **Prompt Generator**: Generiert Claude Code Prompts in verschiedenen Stilen (Detailliert, Minimal, Schritt-für-Schritt, Review, Debug, Tests)
 
 ### Dashboard & Tracking
 - **Dashboard**: Übersicht über alle Projekte mit KPIs
@@ -88,7 +90,7 @@ Die fertige App befindet sich in `dist/win-unpacked/AI Project Manager.exe`
 ## Technologie-Stack
 
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
-- **Backend**: Electron 28
+- **Backend**: Electron 39
 - **AI**: Groq API (llama-3.3-70b-versatile)
 - **Build**: electron-builder
 
@@ -98,6 +100,7 @@ Die fertige App befindet sich in `dist/win-unpacked/AI Project Manager.exe`
 ai-project-manager/
 ├── main.js              # Electron Main Process
 ├── preload.js           # IPC Bridge
+├── start.js             # Electron Starter (Umgebungsvariablen-Fix)
 ├── public/
 │   ├── index.html       # Haupt-UI
 │   ├── styles.css       # Styling (Premium Dark Theme)
@@ -139,6 +142,35 @@ ai-project-manager/
 | 🏷️ Auto-Tags | AI generiert Tags für alle Tasks |
 | 💡 Feature-Ideen | AI schlägt neue Features vor |
 
+### Task-Buttons
+| Button | Funktion |
+|--------|----------|
+| 📋 | Claude Code Prompt Generator |
+| ✏️ | Task bearbeiten |
+| 🗑️ | Task löschen |
+| ▶️ | Timer starten |
+| 💬 | AI Chat zu diesem Task |
+| ✂️ | Task in Subtasks aufteilen |
+
+## Prompt Generator
+
+Der Prompt Generator (📋 Button bei jedem Task) erstellt optimierte Prompts für AI-Coding-Tools wie Claude Code.
+
+### Prompt-Stile
+- **Detailliert**: Vollständiger Prompt mit Projekt-Kontext, Meilenstein und Task-Details
+- **Minimal**: Nur die wesentlichen Task-Informationen
+- **Schritt-für-Schritt**: Strukturierte Anleitung mit nummerierten Schritten
+- **Code Review**: Prompt für Code-Überprüfung
+- **Debugging**: Prompt für Fehlersuche
+- **Tests**: Prompt für Test-Erstellung
+
+### Verwendung
+1. Klicke auf 📋 bei einem Task
+2. Wähle den gewünschten Prompt-Stil
+3. Optional: Füge zusätzlichen Kontext hinzu
+4. Klicke auf "Kopieren" um den Prompt in die Zwischenablage zu kopieren
+5. Füge den Prompt in Claude Code oder ein anderes AI-Tool ein
+
 ## Screenshots
 
 ### Hauptansicht
@@ -155,6 +187,9 @@ Visualisierung des Projektfortschritts mit Ideal- und Ist-Linie.
 
 ### Milestone-Timeline
 Vertikale Zeitachse aller Meilensteine mit Fortschrittsanzeige.
+
+### Prompt Generator
+Modal zum Generieren von AI-Coding-Prompts mit verschiedenen Stilen.
 
 ## Lizenz
 
