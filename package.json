@@ -1,0 +1,45 @@
+{
+  "name": "ai-project-manager",
+  "version": "1.0.0",
+  "description": "AI-powered local project manager that breaks down goals into tasks, milestones, and time estimates",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win dir",
+    "build:installer": "electron-builder --win nsis"
+  },
+  "author": "AI Project Manager",
+  "build": {
+    "appId": "com.aiprojectmanager.app",
+    "productName": "AI Project Manager",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "public/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "data",
+        "to": "data",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": "dir",
+      "signAndEditExecutable": false
+    }
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "groq-sdk": "^0.5.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  }
+}

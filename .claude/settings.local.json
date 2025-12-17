@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm start)",
+      "Bash(npx electron:*)",
+      "Bash(./node_modules/.bin/electron:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(node -e:*)",
+      "Bash(\"./node_modules/electron/dist/electron.exe\" -e \"const { app } = require(''electron''); console.log(''app:'', typeof app); console.log(app);\")",
+      "Bash(cat:*)",
+      "Bash(\"./node_modules/electron/dist/electron.exe\" test-electron.js)",
+      "Bash(\"./node_modules/electron/dist/electron.exe\" -e \"console.log(process.type); const e = require(''electron''); console.log(typeof e.app);\")",
+      "Bash(\"c:\\Users\\bleck\\Desktop\\Projekte\\AI Project Manager Coder\\node_modules\\electron\\dist\\electron.exe\" -e \"console.log(process.type); const e = require(''electron''); console.log(typeof e.app);\")",
+      "Bash(\"c:\\Users\\bleck\\Desktop\\Projekte\\AI Project Manager Coder\\node_modules\\electron\\dist\\electron.exe\" \"c:\\Users\\bleck\\Desktop\\Projekte\\AI Project Manager Coder\\test-main.js\")",
+      "Bash(where:*)",
+      "Bash(electron:*)",
+      "Bash(dir:*)",
+      "Bash(\"C:\\Users\\bleck\\AppData\\Roaming\\npm\\node_modules\\electron\\dist\\electron.exe\" \"c:\\Users\\bleck\\Desktop\\Projekte\\AI Project Manager Coder\\app\")",
+      "Bash(\"C:\\Users\\bleck\\AppData\\Roaming\\npm\\node_modules\\electron\\dist\\electron.exe\" --version)",
+      "Bash(\"C:\\Users\\bleck\\AppData\\Roaming\\npm\\node_modules\\electron\\dist\\electron.exe\" \"c:\\Users\\bleck\\Desktop\\Projekte\\AI Project Manager Coder\\simple-test.js\")",
+      "Bash(\"C:\\Users\\bleck\\AppData\\Roaming\\npm\\node_modules\\electron\\dist\\electron.exe\" .)",
+      "Bash(\"./node_modules/electron/dist/electron.exe\" -v)",
+      "Bash(\"./node_modules/electron/dist/electron.exe\" -e \"console.log(''Electron:'', process.versions.electron, ''Node:'', process.versions.node, ''Chrome:'', process.versions.chrome)\")",
+      "Bash(\"node_modules/.electron-backup/dist/electron.exe\" -e \"const e = require(''electron''); console.log(''app:'', typeof e.app)\")",
+      "Bash(\"./node_modules/electron/dist/electron.exe\" -e \"const {app,BrowserWindow}=require(''electron'');console.log(''app:'',typeof app,''BW:'',typeof BrowserWindow)\")",
+      "Bash(\"./electron-dist/electron.exe\" -e \"console.log(''process.type:'', process.type)\")",
+      "Bash(\"./electron-dist/electron.exe\" .)",
+      "Bash(npm run build:*)"
+    ]
+  }
+}

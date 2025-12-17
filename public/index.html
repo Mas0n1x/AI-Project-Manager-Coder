@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Project Manager</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="app-title">AI Project Manager</h1>
+        <div class="view-toggle" id="view-toggle">
+          <button class="view-btn active" data-view="list">Liste</button>
+          <button class="view-btn" data-view="kanban">Kanban</button>
+          <button class="view-btn" data-view="gantt">Gantt</button>
+        </div>
+      </div>
+      <div class="header-center">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" class="search-input" placeholder="Tasks durchsuchen...">
+        </div>
+      </div>
+      <div class="header-right">
+        <button id="dashboard-btn" class="icon-btn" title="Dashboard">🏠</button>
+        <button id="timetrack-btn" class="icon-btn" title="Zeiterfassung">⏱️</button>
+        <button id="stats-btn" class="icon-btn" title="Statistiken">📊</button>
+        <button id="theme-toggle" class="icon-btn" title="Dark Mode">
+          <span class="theme-icon">🌙</span>
+        </button>
+        <button id="settings-btn" class="icon-btn" title="Einstellungen">⚙️</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Sidebar: Project List -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h2>Projekte</h2>
+          <button id="new-project-btn" class="btn btn-primary btn-sm">+ Neu</button>
+        </div>
+        <div id="project-list" class="project-list"></div>
+      </aside>
+
+      <!-- Main Panel -->
+      <section class="main-panel">
+        <!-- Input Section -->
+        <div id="input-section" class="input-section">
+          <div class="input-header">
+            <h2>Beschreibe dein Projektziel</h2>
+          </div>
+          <div class="input-form">
+            <textarea
+              id="project-goal"
+              class="goal-input"
+              placeholder="z.B. Ich möchte eine mobile App entwickeln, die Nutzer bei der Zeiterfassung unterstützt..."
+              rows="4"
+            ></textarea>
+            <div class="context-section">
+              <label for="project-context">Kontext (optional):</label>
+              <input
+                type="text"
+                id="project-context"
+                class="context-input"
+                placeholder="z.B. React Native, Firebase, Solo-Entwickler"
+              >
+            </div>
+            <div class="input-actions">
+              <button id="analyze-btn" class="btn btn-primary btn-lg">
+                🔍 Analysieren
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading-section" class="loading-section hidden">
+          <div class="spinner"></div>
+          <p>Analysiere Projektziel...</p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" class="results-section hidden">
+          <div class="results-header">
+            <div class="project-info">
+              <input
+                type="text"
+                id="project-name"
+                class="project-name-input"
+                placeholder="Projektname"
+              >
+              <p id="project-description" class="project-description"></p>
+            </div>
+            <div class="results-actions">
+              <button id="save-btn" class="btn btn-secondary">💾 Speichern</button>
+              <button id="export-md-btn" class="btn btn-secondary">📤 MD</button>
+              <button id="export-pdf-btn" class="btn btn-secondary">📄 PDF</button>
+              <button id="ai-summary-btn" class="btn btn-secondary">🤖 Report</button>
+            </div>
+          </div>
+
+          <!-- Stats Cards -->
+          <div id="stats-container" class="stats-container">
+            <div class="stat-card">
+              <h3>Fortschritt</h3>
+              <div class="stat-value success" id="stat-progress">0%</div>
+              <div class="stat-bar">
+                <div class="stat-bar-fill" id="stat-bar-fill" style="width: 0%; background-color: var(--success);"></div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <h3>Tasks erledigt</h3>
+              <div class="stat-value info" id="stat-tasks">0/0</div>
+            </div>
+            <div class="stat-card">
+              <h3>Zeit geschätzt</h3>
+              <div class="stat-value" id="stat-time-total">0h</div>
+            </div>
+            <div class="stat-card">
+              <h3>Zeit erledigt</h3>
+              <div class="stat-value success" id="stat-time-done">0h</div>
+            </div>
+          </div>
+
+          <!-- Filter Bar -->
+          <div class="filter-bar">
+            <div class="filter-group">
+              <button class="filter-btn active" data-filter="all">Alle</button>
+              <button class="filter-btn" data-filter="pending">Offen</button>
+              <button class="filter-btn" data-filter="completed">Erledigt</button>
+            </div>
+            <div class="filter-group">
+              <button class="filter-btn" data-priority="high">🔴 Hoch</button>
+              <button class="filter-btn" data-priority="medium">🟡 Mittel</button>
+              <button class="filter-btn" data-priority="low">🟢 Niedrig</button>
+            </div>
+          </div>
+
+          <!-- List View: Milestones -->
+          <div id="milestones-container" class="milestones-container"></div>
+
+          <!-- Kanban View -->
+          <div id="kanban-container" class="kanban-container">
+            <div class="kanban-column" data-status="todo">
+              <div class="kanban-column-header">
+                <span class="kanban-column-title">📋 To Do <span class="kanban-count" id="kanban-todo-count">0</span></span>
+              </div>
+              <div class="kanban-tasks" id="kanban-todo"></div>
+            </div>
+            <div class="kanban-column" data-status="inprogress">
+              <div class="kanban-column-header">
+                <span class="kanban-column-title">🔄 In Arbeit <span class="kanban-count" id="kanban-inprogress-count">0</span></span>
+              </div>
+              <div class="kanban-tasks" id="kanban-inprogress"></div>
+            </div>
+            <div class="kanban-column" data-status="done">
+              <div class="kanban-column-header">
+                <span class="kanban-column-title">✅ Erledigt <span class="kanban-count" id="kanban-done-count">0</span></span>
+              </div>
+              <div class="kanban-tasks" id="kanban-done"></div>
+            </div>
+          </div>
+
+          <!-- Gantt View -->
+          <div id="gantt-container" class="gantt-container hidden">
+            <div class="gantt-header">
+              <div class="gantt-task-col">Task</div>
+              <div class="gantt-timeline" id="gantt-timeline-header"></div>
+            </div>
+            <div class="gantt-body" id="gantt-body"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- AI Chat FAB -->
+  <button id="ai-chat-fab" class="ai-chat-fab">🤖</button>
+
+  <!-- AI Chat Container -->
+  <div id="ai-chat-container" class="ai-chat-container">
+    <div class="ai-chat-header">
+      <h3>🤖 AI Assistent</h3>
+      <button id="close-chat" class="close-btn">&times;</button>
+    </div>
+    <div id="ai-chat-messages" class="ai-chat-messages">
+      <div class="ai-message assistant">Hallo! Ich kann dir bei deinem Projekt helfen. Frag mich etwas!</div>
+    </div>
+    <div class="ai-chat-input">
+      <input type="text" id="ai-chat-input" placeholder="Nachricht eingeben...">
+      <button id="ai-chat-send" class="btn btn-primary btn-sm">Senden</button>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Einstellungen</h2>
+        <button id="close-settings" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="api-key-input">Groq API Key:</label>
+          <input type="password" id="api-key-input" class="form-input" placeholder="gsk_...">
+          <small class="form-hint">Kostenlos unter <a href="https://console.groq.com/keys" target="_blank" style="color: var(--accent-primary);">console.groq.com</a></small>
+        </div>
+        <div class="form-group">
+          <label for="model-select">Modell:</label>
+          <select id="model-select" class="form-select">
+            <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Empfohlen)</option>
+            <option value="llama-3.1-8b-instant">Llama 3.1 8B (Schneller)</option>
+            <option value="mixtral-8x7b-32768">Mixtral 8x7B (Alternativ)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="save-settings-btn" class="btn btn-primary">Speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task Edit Modal -->
+  <div id="task-modal" class="modal hidden">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2>Task bearbeiten</h2>
+        <button id="close-task-modal" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="task-title-input">Titel:</label>
+          <input type="text" id="task-title-input" class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="task-description-input">Beschreibung:</label>
+          <textarea id="task-description-input" class="form-textarea"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="task-priority-select">Priorität:</label>
+            <select id="task-priority-select" class="form-select">
+              <option value="low">🟢 Niedrig</option>
+              <option value="medium">🟡 Mittel</option>
+              <option value="high">🔴 Hoch</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="task-hours-input">Stunden:</label>
+            <input type="number" id="task-hours-input" class="form-input" step="0.25" min="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="task-tags-input">Tags (kommagetrennt):</label>
+          <input type="text" id="task-tags-input" class="form-input" placeholder="frontend, backend, bug...">
+        </div>
+        <div class="form-group">
+          <label for="task-notes-input">Notizen:</label>
+          <textarea id="task-notes-input" class="form-textarea" placeholder="Eigene Anmerkungen..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="task-reminder-input">Erinnerung:</label>
+          <input type="datetime-local" id="task-reminder-input" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Subtasks:</label>
+          <div id="subtasks-list"></div>
+          <div style="display: flex; gap: 8px; margin-top: 8px;">
+            <input type="text" id="new-subtask-input" class="form-input" placeholder="Neuer Subtask...">
+            <button id="add-subtask-btn" class="btn btn-secondary btn-sm">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="delete-task-btn" class="btn btn-danger">Löschen</button>
+        <button id="ai-split-task-btn" class="btn btn-secondary">🔀 AI Aufteilen</button>
+        <button id="save-task-btn" class="btn btn-primary">Speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-modal" class="modal hidden">
+    <div class="modal-content modal-sm">
+      <div class="modal-header">
+        <h2>Löschen bestätigen</h2>
+        <button id="close-delete" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Möchtest du dieses Projekt wirklich löschen?</p>
+      </div>
+      <div class="modal-footer">
+        <button id="cancel-delete-btn" class="btn btn-secondary">Abbrechen</button>
+        <button id="confirm-delete-btn" class="btn btn-danger">Löschen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Modal -->
+  <div id="stats-modal" class="modal hidden">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2>📊 Projekt-Statistiken</h2>
+        <button id="close-stats" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="stats-details"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feature Suggestions Modal -->
+  <div id="features-modal" class="modal hidden">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2>💡 Feature-Vorschläge für dein Projekt</h2>
+        <button id="close-features" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="features-intro">Basierend auf deinem Projekt könnten diese Features interessant sein. Wähle aus, welche du einbauen möchtest:</p>
+        <div id="features-list" class="features-list"></div>
+        <div id="features-loading" class="features-loading hidden">
+          <div class="spinner"></div>
+          <p>Generiere passende Feature-Vorschläge...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="skip-features-btn" class="btn btn-secondary">Überspringen</button>
+        <button id="add-features-btn" class="btn btn-primary">Ausgewählte hinzufügen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Modal -->
+  <div id="dashboard-modal" class="modal hidden">
+    <div class="modal-content modal-xl">
+      <div class="modal-header">
+        <h2>🏠 Dashboard - Alle Projekte</h2>
+        <button id="close-dashboard" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="dashboard-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Time Tracking Modal -->
+  <div id="timetrack-modal" class="modal hidden">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2>⏱️ Arbeitszeit-Übersicht</h2>
+        <button id="close-timetrack" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="timetrack-tabs">
+          <button class="timetrack-tab active" data-period="week">Diese Woche</button>
+          <button class="timetrack-tab" data-period="month">Dieser Monat</button>
+          <button class="timetrack-tab" data-period="all">Gesamt</button>
+        </div>
+        <div id="timetrack-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Summary Modal -->
+  <div id="summary-modal" class="modal hidden">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2>🤖 AI Projekt-Report</h2>
+        <button id="close-summary" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="summary-content"></div>
+        <div id="summary-loading" class="features-loading hidden">
+          <div class="spinner"></div>
+          <p>Generiere Projekt-Report...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="copy-summary-btn" class="btn btn-secondary">📋 Kopieren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Split Task Modal -->
+  <div id="split-task-modal" class="modal hidden">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2>🔀 Task in Subtasks aufteilen</h2>
+        <button id="close-split-task" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="split-task-content"></div>
+        <div id="split-task-loading" class="features-loading hidden">
+          <div class="spinner"></div>
+          <p>AI analysiert Task...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancel-split-btn" class="btn btn-secondary">Abbrechen</button>
+        <button id="apply-split-btn" class="btn btn-primary">Subtasks übernehmen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden">
+    <span id="toast-message"></span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

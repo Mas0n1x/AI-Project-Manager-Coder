@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+  <title>AI Project Manager</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="app-title">AI Project Manager</h1>
+      </div>
+      <div class="header-right">
+        <select id="language-select" class="language-select">
+          <option value="de">Deutsch</option>
+          <option value="en">English</option>
+        </select>
+        <button id="theme-toggle" class="icon-btn" title="Toggle Dark Mode">
+          <span class="theme-icon">🌙</span>
+        </button>
+        <button id="settings-btn" class="icon-btn" title="Settings">
+          ⚙️
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Sidebar: Project List -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h2 data-i18n="projects">Projekte</h2>
+          <button id="new-project-btn" class="btn btn-primary btn-sm" data-i18n="newProject">
+            + Neu
+          </button>
+        </div>
+        <div id="project-list" class="project-list">
+          <!-- Projects will be loaded here -->
+        </div>
+      </aside>
+
+      <!-- Main Panel -->
+      <section class="main-panel">
+        <!-- Input Section -->
+        <div id="input-section" class="input-section">
+          <div class="input-header">
+            <h2 data-i18n="describeGoal">Beschreibe dein Projektziel</h2>
+          </div>
+          <div class="input-form">
+            <textarea
+              id="project-goal"
+              class="goal-input"
+              placeholder="z.B. Ich möchte eine mobile App entwickeln, die Nutzer bei der Zeiterfassung unterstützt..."
+              data-i18n-placeholder="goalPlaceholder"
+              rows="4"
+            ></textarea>
+            <div class="context-section">
+              <label for="project-context" data-i18n="contextLabel">Kontext (optional):</label>
+              <input
+                type="text"
+                id="project-context"
+                class="context-input"
+                placeholder="z.B. React Native, Firebase, Solo-Entwickler"
+                data-i18n-placeholder="contextPlaceholder"
+              >
+            </div>
+            <div class="input-actions">
+              <button id="analyze-btn" class="btn btn-primary btn-lg" data-i18n="analyze">
+                🔍 Analysieren
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading-section" class="loading-section hidden">
+          <div class="spinner"></div>
+          <p data-i18n="analyzing">Analysiere Projektziel...</p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" class="results-section hidden">
+          <div class="results-header">
+            <div class="project-info">
+              <input
+                type="text"
+                id="project-name"
+                class="project-name-input"
+                placeholder="Projektname"
+                data-i18n-placeholder="projectName"
+              >
+              <p id="project-description" class="project-description"></p>
+            </div>
+            <div class="results-actions">
+              <button id="save-btn" class="btn btn-secondary" data-i18n="save">
+                💾 Speichern
+              </button>
+              <div class="dropdown">
+                <button id="export-btn" class="btn btn-secondary" data-i18n="export">
+                  📤 Export
+                </button>
+                <div class="dropdown-content">
+                  <button id="export-pdf-btn" data-i18n="exportPDF">PDF</button>
+                  <button id="export-md-btn" data-i18n="exportMarkdown">Markdown</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="progress-container">
+            <div class="progress-info">
+              <span id="progress-text" data-i18n="progress">Fortschritt</span>
+              <span id="progress-percentage">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="time-info">
+              <span id="time-completed">0h</span> / <span id="time-total">0h</span>
+            </div>
+          </div>
+
+          <!-- Milestones -->
+          <div id="milestones-container" class="milestones-container">
+            <!-- Milestones will be rendered here -->
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 data-i18n="settings">Einstellungen</h2>
+        <button id="close-settings" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="api-key-input" data-i18n="apiKey">OpenAI API Key:</label>
+          <input
+            type="password"
+            id="api-key-input"
+            class="form-input"
+            placeholder="sk-..."
+          >
+          <small class="form-hint" data-i18n="apiKeyHint">
+            Dein API-Key wird lokal gespeichert und niemals übertragen.
+          </small>
+        </div>
+        <div class="form-group">
+          <label for="model-select" data-i18n="model">Modell:</label>
+          <select id="model-select" class="form-select">
+            <option value="gpt-4">GPT-4 (Empfohlen)</option>
+            <option value="gpt-4-turbo-preview">GPT-4 Turbo</option>
+            <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Schneller)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="save-settings-btn" class="btn btn-primary" data-i18n="saveSettings">
+          Speichern
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-modal" class="modal hidden">
+    <div class="modal-content modal-sm">
+      <div class="modal-header">
+        <h2 data-i18n="confirmDelete">Löschen bestätigen</h2>
+        <button id="close-delete" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p data-i18n="deleteConfirmText">Möchtest du dieses Projekt wirklich löschen?</p>
+      </div>
+      <div class="modal-footer">
+        <button id="cancel-delete-btn" class="btn btn-secondary" data-i18n="cancel">
+          Abbrechen
+        </button>
+        <button id="confirm-delete-btn" class="btn btn-danger" data-i18n="delete">
+          Löschen
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden">
+    <span id="toast-message"></span>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

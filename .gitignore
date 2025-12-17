@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Project Data
+projects/*.json
+!projects/.gitkeep
+data/*.json
+!data/.gitkeep
+
+# Build Output
+dist/
+out/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Electron
+*.asar
+
+# Temp files
+*.tmp
+*.temp
