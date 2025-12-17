@@ -824,3 +824,378 @@ ${taskList}`;
     return { error: error.message };
   }
 });
+
+// ============== Webhook System ==============
+
+// Send webhook notification
+ipcMain.handle('send-webhook', async (event, { url, payload }) => {
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return { success: true, status: response.status };
+  } catch (error) {
+    console.error('Webhook error:', error);
+    return { error: error.message };
+  }
+});
+
+// Get webhooks from settings
+ipcMain.handle('get-webhooks', () => {
+  try {
+    const settings = loadSettings();
+    return settings.webhooks || [];
+  } catch (error) {
+    return [];
+  }
+});
+
+// Save webhooks to settings
+ipcMain.handle('save-webhooks', (event, webhooks) => {
+  try {
+    const settings = loadSettings();
+    settings.webhooks = webhooks;
+    saveSettings(settings);
+    return { success: true };
+  } catch (error) {
+    return { error: error.message };
+  }
+});
+
+// ============== Backup System ==============
+
+const BACKUP_DIR = () => path.join(DATA_DIR, 'backups');
+
+// Ensure backup directory exists
+function ensureBackupDir() {
+  const dir = BACKUP_DIR();
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+}
+
+// Create backup
+ipcMain.handle('create-backup', (event, { name }) => {
+  try {
+    ensureBackupDir();
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupName = name || `backup-${timestamp}`;
+    const backupPath = path.join(BACKUP_DIR(), `${backupName}.json`);
+
+    // Collect all data
+    const backup = {
+      version: '1.0',
+      createdAt: new Date().toISOString(),
+      name: backupName,
+      settings: loadSettings(),
+      projects: [],
+      timeTracking: {}
+    };
+
+    // Get all projects
+    const files = fs.readdirSync(PROJECTS_DIR);
+    for (const file of files) {
+      if (file.endsWith('.json')) {
+        try {
+          const data = fs.readFileSync(path.join(PROJECTS_DIR, file), 'utf8');
+          backup.projects.push(JSON.parse(data));
+        } catch (e) {}
+      }
+    }
+
+    // Get time tracking
+    const timeFile = path.join(DATA_DIR, 'timetracking.json');
+    if (fs.existsSync(timeFile)) {
+      backup.timeTracking = JSON.parse(fs.readFileSync(timeFile, 'utf8'));
+    }
+
+    // Remove API key from backup for security
+    if (backup.settings.apiKey) {
+      backup.settings.apiKey = '';
+    }
+
+    fs.writeFileSync(backupPath, JSON.stringify(backup, null, 2), 'utf8');
+
+    return {
+      success: true,
+      path: backupPath,
+      name: backupName,
+      projectCount: backup.projects.length
+    };
+  } catch (error) {
+    console.error('Backup error:', error);
+    return { error: error.message };
+  }
+});
+
+// List backups
+ipcMain.handle('list-backups', () => {
+  try {
+    ensureBackupDir();
+    const files = fs.readdirSync(BACKUP_DIR());
+    const backups = [];
+
+    for (const file of files) {
+      if (file.endsWith('.json')) {
+        try {
+          const filePath = path.join(BACKUP_DIR(), file);
+          const stats = fs.statSync(filePath);
+          const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+          backups.push({
+            filename: file,
+            name: data.name || file.replace('.json', ''),
+            createdAt: data.createdAt || stats.mtime.toISOString(),
+            projectCount: data.projects?.length || 0,
+            size: stats.size
+          });
+        } catch (e) {}
+      }
+    }
+
+    backups.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return backups;
+  } catch (error) {
+    return [];
+  }
+});
+
+// Restore backup
+ipcMain.handle('restore-backup', (event, { filename }) => {
+  try {
+    const backupPath = path.join(BACKUP_DIR(), filename);
+    if (!fs.existsSync(backupPath)) {
+      return { error: 'Backup not found' };
+    }
+
+    const backup = JSON.parse(fs.readFileSync(backupPath, 'utf8'));
+
+    // Restore projects
+    let restoredProjects = 0;
+    for (const project of backup.projects || []) {
+      const projectPath = path.join(PROJECTS_DIR, `${project.id}.json`);
+      fs.writeFileSync(projectPath, JSON.stringify(project, null, 2), 'utf8');
+      restoredProjects++;
+    }
+
+    // Restore time tracking
+    if (backup.timeTracking && Object.keys(backup.timeTracking).length > 0) {
+      const timeFile = path.join(DATA_DIR, 'timetracking.json');
+      fs.writeFileSync(timeFile, JSON.stringify(backup.timeTracking, null, 2), 'utf8');
+    }
+
+    // Restore settings (except API key)
+    if (backup.settings) {
+      const currentSettings = loadSettings();
+      const newSettings = { ...backup.settings, apiKey: currentSettings.apiKey };
+      saveSettings(newSettings);
+    }
+
+    return {
+      success: true,
+      restoredProjects,
+      message: `${restoredProjects} Projekte wiederhergestellt`
+    };
+  } catch (error) {
+    console.error('Restore error:', error);
+    return { error: error.message };
+  }
+});
+
+// Delete backup
+ipcMain.handle('delete-backup', (event, { filename }) => {
+  try {
+    const backupPath = path.join(BACKUP_DIR(), filename);
+    if (fs.existsSync(backupPath)) {
+      fs.unlinkSync(backupPath);
+      return { success: true };
+    }
+    return { error: 'Backup not found' };
+  } catch (error) {
+    return { error: error.message };
+  }
+});
+
+// ============== iCal Export ==============
+
+ipcMain.handle('export-ical', (event, { project, includeCompleted }) => {
+  try {
+    const lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//AI Project Manager//DE',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      `X-WR-CALNAME:${project.name}`
+    ];
+
+    const now = new Date();
+    let taskIndex = 0;
+
+    for (const milestone of project.milestones || []) {
+      for (const task of milestone.tasks || []) {
+        if (!includeCompleted && task.completed) continue;
+
+        taskIndex++;
+        const startDate = new Date(now);
+        startDate.setDate(startDate.getDate() + taskIndex);
+
+        const endDate = new Date(startDate);
+        endDate.setHours(endDate.getHours() + (task.estimatedHours || 1));
+
+        const formatDate = (d) => {
+          return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+        };
+
+        const uid = `${task.id}@aiprojectmanager`;
+        const summary = task.title.replace(/,/g, '\\,').replace(/;/g, '\\;');
+        const description = (task.description || '').replace(/,/g, '\\,').replace(/;/g, '\\;').replace(/\n/g, '\\n');
+
+        lines.push('BEGIN:VEVENT');
+        lines.push(`UID:${uid}`);
+        lines.push(`DTSTAMP:${formatDate(now)}`);
+        lines.push(`DTSTART:${formatDate(startDate)}`);
+        lines.push(`DTEND:${formatDate(endDate)}`);
+        lines.push(`SUMMARY:${summary}`);
+        if (description) lines.push(`DESCRIPTION:${description}`);
+        lines.push(`CATEGORIES:${milestone.name}`);
+        if (task.priority) lines.push(`PRIORITY:${task.priority === 'high' ? 1 : task.priority === 'low' ? 9 : 5}`);
+        lines.push(`STATUS:${task.completed ? 'COMPLETED' : 'NEEDS-ACTION'}`);
+        lines.push('END:VEVENT');
+      }
+    }
+
+    lines.push('END:VCALENDAR');
+    return { ical: lines.join('\r\n') };
+  } catch (error) {
+    console.error('iCal export error:', error);
+    return { error: error.message };
+  }
+});
+
+// ============== Time Comparison Report ==============
+
+ipcMain.handle('get-time-comparison', (event, { projectId }) => {
+  try {
+    // Get project
+    const projectPath = path.join(PROJECTS_DIR, `${projectId}.json`);
+    if (!fs.existsSync(projectPath)) {
+      return { error: 'Project not found' };
+    }
+
+    const project = JSON.parse(fs.readFileSync(projectPath, 'utf8'));
+
+    // Get time tracking data
+    const timeFile = path.join(DATA_DIR, 'timetracking.json');
+    let timeData = {};
+    if (fs.existsSync(timeFile)) {
+      timeData = JSON.parse(fs.readFileSync(timeFile, 'utf8'));
+    }
+
+    const projectTimeData = timeData[projectId] || {};
+
+    // Build comparison data
+    const byTag = {};
+    const byMilestone = {};
+    const byDay = {};
+    const tasks = [];
+
+    for (const milestone of project.milestones || []) {
+      if (!byMilestone[milestone.name]) {
+        byMilestone[milestone.name] = { estimated: 0, tracked: 0 };
+      }
+
+      for (const task of milestone.tasks || []) {
+        const estimated = task.estimatedHours || 0;
+        const trackedSeconds = task.timerSeconds || 0;
+        const tracked = trackedSeconds / 3600;
+
+        // Add to milestone totals
+        byMilestone[milestone.name].estimated += estimated;
+        byMilestone[milestone.name].tracked += tracked;
+
+        // Add to tag totals
+        for (const tag of task.tags || []) {
+          if (!byTag[tag]) byTag[tag] = { estimated: 0, tracked: 0 };
+          byTag[tag].estimated += estimated;
+          byTag[tag].tracked += tracked;
+        }
+
+        // Add to day totals from time tracking
+        const taskTimeData = projectTimeData[task.id] || {};
+        for (const [date, seconds] of Object.entries(taskTimeData)) {
+          if (!byDay[date]) byDay[date] = 0;
+          byDay[date] += seconds / 3600;
+        }
+
+        tasks.push({
+          id: task.id,
+          title: task.title,
+          milestone: milestone.name,
+          estimated,
+          tracked,
+          difference: tracked - estimated,
+          percentDiff: estimated > 0 ? Math.round(((tracked - estimated) / estimated) * 100) : 0,
+          completed: task.completed,
+          tags: task.tags || []
+        });
+      }
+    }
+
+    // Calculate totals
+    const totalEstimated = tasks.reduce((sum, t) => sum + t.estimated, 0);
+    const totalTracked = tasks.reduce((sum, t) => sum + t.tracked, 0);
+
+    return {
+      project: { id: project.id, name: project.name },
+      totals: {
+        estimated: totalEstimated,
+        tracked: totalTracked,
+        difference: totalTracked - totalEstimated,
+        percentDiff: totalEstimated > 0 ? Math.round(((totalTracked - totalEstimated) / totalEstimated) * 100) : 0
+      },
+      byMilestone,
+      byTag,
+      byDay,
+      tasks
+    };
+  } catch (error) {
+    console.error('Time comparison error:', error);
+    return { error: error.message };
+  }
+});
+
+// ============== Custom Dashboard ==============
+
+ipcMain.handle('get-dashboard-config', () => {
+  try {
+    const settings = loadSettings();
+    return settings.dashboardConfig || {
+      widgets: [
+        { id: 'projects-overview', type: 'projects-overview', position: 0, enabled: true },
+        { id: 'recent-activity', type: 'recent-activity', position: 1, enabled: true },
+        { id: 'time-this-week', type: 'time-this-week', position: 2, enabled: true },
+        { id: 'task-stats', type: 'task-stats', position: 3, enabled: true }
+      ]
+    };
+  } catch (error) {
+    return { widgets: [] };
+  }
+});
+
+ipcMain.handle('save-dashboard-config', (event, config) => {
+  try {
+    const settings = loadSettings();
+    settings.dashboardConfig = config;
+    saveSettings(settings);
+    return { success: true };
+  } catch (error) {
+    return { error: error.message };
+  }
+});

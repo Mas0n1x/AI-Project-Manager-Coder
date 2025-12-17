@@ -32,6 +32,8 @@
         <button id="stats-btn" class="icon-btn" title="Statistiken">📊</button>
         <button id="heatmap-btn" class="icon-btn" title="Heatmap">🔥</button>
         <button id="dependency-btn" class="icon-btn" title="Abhängigkeiten">🔗</button>
+        <button id="backup-btn" class="icon-btn" title="Backup & Restore">💾</button>
+        <button id="webhook-btn" class="icon-btn" title="Webhooks">🔔</button>
         <button id="theme-toggle" class="icon-btn" title="Dark Mode">
           <span class="theme-icon">🌙</span>
         </button>
@@ -104,6 +106,8 @@
               <button id="export-md-btn" class="btn btn-secondary">📤 MD</button>
               <button id="export-pdf-btn" class="btn btn-secondary">📄 PDF</button>
               <button id="export-csv-btn" class="btn btn-secondary">📊 CSV</button>
+              <button id="export-ical-btn" class="btn btn-secondary">📅 iCal</button>
+              <button id="timecompare-btn" class="btn btn-secondary">⏱️ Zeitvergleich</button>
               <button id="ai-summary-btn" class="btn btn-secondary">🤖 Report</button>
               <button id="ai-sprint-btn" class="btn btn-secondary">🏃 Sprint</button>
               <button id="ai-autotag-btn" class="btn btn-secondary">🏷️ Auto-Tags</button>
@@ -578,6 +582,148 @@
       <div class="modal-footer">
         <button id="cancel-autotag-btn" class="btn btn-secondary">Abbrechen</button>
         <button id="apply-autotag-btn" class="btn btn-primary">Tags übernehmen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Webhook Settings Modal -->
+  <div id="webhook-modal" class="modal hidden">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2>🔔 Webhook-Benachrichtigungen</h2>
+        <button id="close-webhook" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle">Sende Benachrichtigungen an externe Services bei Task-Completion</p>
+        <div class="webhook-list" id="webhook-list"></div>
+        <div class="webhook-add">
+          <div class="form-group">
+            <label>Webhook URL:</label>
+            <input type="url" id="webhook-url" class="form-input" placeholder="https://hooks.slack.com/...">
+          </div>
+          <div class="form-group">
+            <label>Name:</label>
+            <input type="text" id="webhook-name" class="form-input" placeholder="Slack Notifications">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Events:</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" id="webhook-task-complete" checked> Task erledigt</label>
+                <label><input type="checkbox" id="webhook-milestone-complete"> Meilenstein erledigt</label>
+                <label><input type="checkbox" id="webhook-project-complete"> Projekt abgeschlossen</label>
+              </div>
+            </div>
+          </div>
+          <button id="add-webhook-btn" class="btn btn-secondary">+ Webhook hinzufügen</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="save-webhooks-btn" class="btn btn-primary">💾 Speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backup Modal -->
+  <div id="backup-modal" class="modal hidden">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2>💾 Backup & Restore</h2>
+        <button id="close-backup" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="backup-actions">
+          <div class="backup-create">
+            <h3>Neues Backup erstellen</h3>
+            <div class="form-row">
+              <input type="text" id="backup-name" class="form-input" placeholder="Backup Name (optional)">
+              <button id="create-backup-btn" class="btn btn-primary">📦 Backup erstellen</button>
+            </div>
+          </div>
+        </div>
+        <div class="backup-list-container">
+          <h3>Vorhandene Backups</h3>
+          <div class="backup-list" id="backup-list">
+            <p class="empty-message">Keine Backups vorhanden</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Time Comparison Modal -->
+  <div id="timecompare-modal" class="modal hidden">
+    <div class="modal-content modal-xl">
+      <div class="modal-header">
+        <h2>⏱️ Zeitvergleich-Report</h2>
+        <button id="close-timecompare" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="timecompare-summary" id="timecompare-summary"></div>
+        <div class="timecompare-charts">
+          <div class="timecompare-chart">
+            <h3>Nach Meilenstein</h3>
+            <div id="timecompare-milestone-chart" class="chart-container"></div>
+          </div>
+          <div class="timecompare-chart">
+            <h3>Nach Tag</h3>
+            <div id="timecompare-tag-chart" class="chart-container"></div>
+          </div>
+        </div>
+        <div class="timecompare-table">
+          <h3>Task-Details</h3>
+          <table id="timecompare-table">
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>Meilenstein</th>
+                <th>Geschätzt</th>
+                <th>Getrackt</th>
+                <th>Differenz</th>
+              </tr>
+            </thead>
+            <tbody id="timecompare-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Dashboard Modal -->
+  <div id="dashboard-config-modal" class="modal hidden">
+    <div class="modal-content modal-md">
+      <div class="modal-header">
+        <h2>⚙️ Dashboard konfigurieren</h2>
+        <button id="close-dashboard-config" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle">Widgets ein- oder ausblenden und Reihenfolge anpassen</p>
+        <div class="widget-config-list" id="widget-config-list"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="save-dashboard-config-btn" class="btn btn-primary">💾 Speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- iCal Export Modal -->
+  <div id="ical-modal" class="modal hidden">
+    <div class="modal-content modal-md">
+      <div class="modal-header">
+        <h2>📅 Kalender Export (iCal)</h2>
+        <button id="close-ical" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle">Exportiere Tasks als Kalender-Datei für Google Calendar, Outlook, etc.</p>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="ical-include-completed">
+            Erledigte Tasks einschließen
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="export-ical-btn" class="btn btn-primary">📅 .ics exportieren</button>
       </div>
     </div>
   </div>

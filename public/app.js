@@ -2834,5 +2834,642 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// ============================================
+// WEBHOOK SYSTEM
+// ============================================
+
+let webhooks = [];
+
+async function loadWebhooks() {
+  webhooks = await window.electronAPI.getWebhooks();
+  renderWebhookList();
+}
+
+function renderWebhookList() {
+  const container = document.getElementById('webhook-list');
+  if (!container) return;
+
+  if (webhooks.length === 0) {
+    container.innerHTML = '<p class="empty-message">Keine Webhooks konfiguriert</p>';
+    return;
+  }
+
+  container.innerHTML = webhooks.map((webhook, index) => `
+    <div class="webhook-item">
+      <div class="webhook-item-info">
+        <div class="webhook-item-name">${webhook.name || 'Unbenannter Webhook'}</div>
+        <div class="webhook-item-url">${webhook.url}</div>
+        <div class="webhook-item-events">
+          ${webhook.events.taskComplete ? '<span class="webhook-event-badge">Task</span>' : ''}
+          ${webhook.events.milestoneComplete ? '<span class="webhook-event-badge">Meilenstein</span>' : ''}
+          ${webhook.events.projectComplete ? '<span class="webhook-event-badge">Projekt</span>' : ''}
+        </div>
+      </div>
+      <div class="webhook-item-actions">
+        <button class="btn btn-danger btn-sm" onclick="deleteWebhook(${index})">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addWebhook() {
+  const url = document.getElementById('webhook-url').value.trim();
+  const name = document.getElementById('webhook-name').value.trim();
+  const taskComplete = document.getElementById('webhook-task-complete').checked;
+  const milestoneComplete = document.getElementById('webhook-milestone-complete').checked;
+  const projectComplete = document.getElementById('webhook-project-complete').checked;
+
+  if (!url) {
+    showToast('Bitte URL eingeben');
+    return;
+  }
+
+  webhooks.push({
+    url,
+    name: name || 'Webhook',
+    events: {
+      taskComplete,
+      milestoneComplete,
+      projectComplete
+    }
+  });
+
+  // Clear inputs
+  document.getElementById('webhook-url').value = '';
+  document.getElementById('webhook-name').value = '';
+  document.getElementById('webhook-task-complete').checked = true;
+  document.getElementById('webhook-milestone-complete').checked = false;
+  document.getElementById('webhook-project-complete').checked = false;
+
+  renderWebhookList();
+  showToast('Webhook hinzugefügt');
+}
+
+function deleteWebhook(index) {
+  webhooks.splice(index, 1);
+  renderWebhookList();
+}
+
+async function saveWebhooks() {
+  await window.electronAPI.saveWebhooks(webhooks);
+  showToast('Webhooks gespeichert');
+  document.getElementById('webhook-modal').classList.add('hidden');
+}
+
+async function triggerWebhook(eventType, data) {
+  for (const webhook of webhooks) {
+    if (webhook.events[eventType]) {
+      try {
+        await window.electronAPI.sendWebhook({
+          url: webhook.url,
+          payload: {
+            event: eventType,
+            timestamp: new Date().toISOString(),
+            project: currentProject ? { id: currentProject.id, name: currentProject.name } : null,
+            data
+          }
+        });
+      } catch (e) {
+        console.error('Webhook error:', e);
+      }
+    }
+  }
+}
+
+// ============================================
+// BACKUP SYSTEM
+// ============================================
+
+async function loadBackups() {
+  const backups = await window.electronAPI.listBackups();
+  renderBackupList(backups);
+}
+
+function renderBackupList(backups) {
+  const container = document.getElementById('backup-list');
+  if (!container) return;
+
+  if (backups.length === 0) {
+    container.innerHTML = '<p class="empty-message">Keine Backups vorhanden</p>';
+    return;
+  }
+
+  container.innerHTML = backups.map(backup => `
+    <div class="backup-item">
+      <div class="backup-item-info">
+        <div class="backup-item-name">${backup.name}</div>
+        <div class="backup-item-meta">
+          <span>📅 ${new Date(backup.createdAt).toLocaleString('de-DE')}</span>
+          <span>📁 ${backup.projectCount} Projekte</span>
+          <span>💾 ${(backup.size / 1024).toFixed(1)} KB</span>
+        </div>
+      </div>
+      <div class="backup-item-actions">
+        <button class="btn btn-secondary btn-sm" onclick="restoreBackup('${backup.filename}')">♻️ Restore</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteBackup('${backup.filename}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function createBackup() {
+  const name = document.getElementById('backup-name').value.trim();
+  const result = await window.electronAPI.createBackup({ name });
+
+  if (result.error) {
+    showToast('Fehler: ' + result.error);
+  } else {
+    showToast(`Backup erstellt: ${result.projectCount} Projekte gesichert`);
+    document.getElementById('backup-name').value = '';
+    loadBackups();
+  }
+}
+
+async function restoreBackup(filename) {
+  if (!confirm('Backup wiederherstellen? Bestehende Projekte werden überschrieben.')) return;
+
+  const result = await window.electronAPI.restoreBackup({ filename });
+
+  if (result.error) {
+    showToast('Fehler: ' + result.error);
+  } else {
+    showToast(result.message);
+    await loadProjects();
+  }
+}
+
+async function deleteBackup(filename) {
+  if (!confirm('Backup wirklich löschen?')) return;
+
+  const result = await window.electronAPI.deleteBackup({ filename });
+
+  if (result.error) {
+    showToast('Fehler: ' + result.error);
+  } else {
+    showToast('Backup gelöscht');
+    loadBackups();
+  }
+}
+
+// ============================================
+// ICAL EXPORT
+// ============================================
+
+async function exportIcal() {
+  if (!currentProject) return;
+
+  const includeCompleted = document.getElementById('ical-include-completed').checked;
+  const result = await window.electronAPI.exportIcal({
+    project: currentProject,
+    includeCompleted
+  });
+
+  if (result.error) {
+    showToast('Fehler: ' + result.error);
+    return;
+  }
+
+  // Download iCal file
+  const blob = new Blob([result.ical], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${currentProject.name.replace(/[^a-z0-9]/gi, '_')}.ics`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  showToast('iCal exportiert');
+  document.getElementById('ical-modal').classList.add('hidden');
+}
+
+// ============================================
+// TIME COMPARISON REPORT
+// ============================================
+
+async function showTimeComparison() {
+  if (!currentProject) return;
+
+  const result = await window.electronAPI.getTimeComparison({ projectId: currentProject.id });
+
+  if (result.error) {
+    showToast('Fehler: ' + result.error);
+    return;
+  }
+
+  // Render summary
+  const summaryDiv = document.getElementById('timecompare-summary');
+  const diffClass = result.totals.difference > 0 ? 'negative' : 'positive';
+  summaryDiv.innerHTML = `
+    <div class="timecompare-stat">
+      <div class="timecompare-stat-label">Geschätzt</div>
+      <div class="timecompare-stat-value">${result.totals.estimated.toFixed(1)}h</div>
+    </div>
+    <div class="timecompare-stat">
+      <div class="timecompare-stat-label">Getrackt</div>
+      <div class="timecompare-stat-value">${result.totals.tracked.toFixed(1)}h</div>
+    </div>
+    <div class="timecompare-stat">
+      <div class="timecompare-stat-label">Differenz</div>
+      <div class="timecompare-stat-value ${diffClass}">${result.totals.difference > 0 ? '+' : ''}${result.totals.difference.toFixed(1)}h</div>
+    </div>
+    <div class="timecompare-stat">
+      <div class="timecompare-stat-label">Abweichung</div>
+      <div class="timecompare-stat-value ${diffClass}">${result.totals.percentDiff > 0 ? '+' : ''}${result.totals.percentDiff}%</div>
+    </div>
+  `;
+
+  // Render milestone chart
+  const milestoneChart = document.getElementById('timecompare-milestone-chart');
+  const maxMilestoneValue = Math.max(...Object.values(result.byMilestone).flatMap(m => [m.estimated, m.tracked]), 1);
+  milestoneChart.innerHTML = Object.entries(result.byMilestone).map(([name, data]) => `
+    <div class="chart-bar">
+      <div class="chart-bar-label" title="${name}">${name}</div>
+      <div class="chart-bar-container">
+        <div class="chart-bar-estimated" style="width: ${(data.estimated / maxMilestoneValue) * 100}%" title="Geschätzt: ${data.estimated.toFixed(1)}h"></div>
+        <div class="chart-bar-tracked" style="width: ${(data.tracked / maxMilestoneValue) * 100}%" title="Getrackt: ${data.tracked.toFixed(1)}h"></div>
+      </div>
+      <div class="chart-bar-value">${data.tracked.toFixed(1)}h</div>
+    </div>
+  `).join('');
+
+  // Render tag chart
+  const tagChart = document.getElementById('timecompare-tag-chart');
+  const maxTagValue = Math.max(...Object.values(result.byTag).flatMap(t => [t.estimated, t.tracked]), 1);
+  if (Object.keys(result.byTag).length > 0) {
+    tagChart.innerHTML = Object.entries(result.byTag).map(([name, data]) => `
+      <div class="chart-bar">
+        <div class="chart-bar-label" title="${name}">${name}</div>
+        <div class="chart-bar-container">
+          <div class="chart-bar-estimated" style="width: ${(data.estimated / maxTagValue) * 100}%" title="Geschätzt: ${data.estimated.toFixed(1)}h"></div>
+          <div class="chart-bar-tracked" style="width: ${(data.tracked / maxTagValue) * 100}%" title="Getrackt: ${data.tracked.toFixed(1)}h"></div>
+        </div>
+        <div class="chart-bar-value">${data.tracked.toFixed(1)}h</div>
+      </div>
+    `).join('');
+  } else {
+    tagChart.innerHTML = '<p class="empty-message">Keine Tags vorhanden</p>';
+  }
+
+  // Render table
+  const tbody = document.getElementById('timecompare-tbody');
+  tbody.innerHTML = result.tasks.map(task => {
+    const diffClass = task.difference > 0 ? 'diff-positive' : task.difference < 0 ? 'diff-negative' : '';
+    return `
+      <tr>
+        <td>${task.completed ? '✅' : '⬜'} ${task.title}</td>
+        <td>${task.milestone}</td>
+        <td>${task.estimated.toFixed(1)}h</td>
+        <td>${task.tracked.toFixed(1)}h</td>
+        <td class="${diffClass}">${task.difference > 0 ? '+' : ''}${task.difference.toFixed(1)}h (${task.percentDiff > 0 ? '+' : ''}${task.percentDiff}%)</td>
+      </tr>
+    `;
+  }).join('');
+
+  document.getElementById('timecompare-modal').classList.remove('hidden');
+}
+
+// ============================================
+// CUSTOM DASHBOARD
+// ============================================
+
+let dashboardConfig = null;
+
+const widgetNames = {
+  'projects-overview': '📁 Projektübersicht',
+  'recent-activity': '🕒 Letzte Aktivität',
+  'time-this-week': '⏱️ Zeit diese Woche',
+  'task-stats': '📊 Task-Statistiken'
+};
+
+async function loadDashboardConfig() {
+  dashboardConfig = await window.electronAPI.getDashboardConfig();
+}
+
+function openDashboardConfig() {
+  renderDashboardConfigList();
+  document.getElementById('dashboard-config-modal').classList.remove('hidden');
+}
+
+function renderDashboardConfigList() {
+  const container = document.getElementById('widget-config-list');
+  if (!container || !dashboardConfig) return;
+
+  container.innerHTML = dashboardConfig.widgets
+    .sort((a, b) => a.position - b.position)
+    .map(widget => `
+      <div class="widget-config-item" data-widget-id="${widget.id}" draggable="true">
+        <div class="widget-config-left">
+          <span class="widget-drag-handle">⋮⋮</span>
+          <span class="widget-config-name">${widgetNames[widget.type] || widget.type}</span>
+        </div>
+        <div class="widget-config-toggle ${widget.enabled ? 'active' : ''}"
+             onclick="toggleWidget('${widget.id}')"></div>
+      </div>
+    `).join('');
+
+  // Add drag and drop
+  const items = container.querySelectorAll('.widget-config-item');
+  items.forEach(item => {
+    item.addEventListener('dragstart', handleWidgetDragStart);
+    item.addEventListener('dragover', handleWidgetDragOver);
+    item.addEventListener('drop', handleWidgetDrop);
+    item.addEventListener('dragend', handleWidgetDragEnd);
+  });
+}
+
+let draggedWidget = null;
+
+function handleWidgetDragStart(e) {
+  draggedWidget = e.target;
+  e.target.classList.add('dragging');
+}
+
+function handleWidgetDragOver(e) {
+  e.preventDefault();
+}
+
+function handleWidgetDrop(e) {
+  e.preventDefault();
+  if (draggedWidget !== e.target) {
+    const container = document.getElementById('widget-config-list');
+    const items = Array.from(container.children);
+    const draggedIndex = items.indexOf(draggedWidget);
+    const targetIndex = items.indexOf(e.target.closest('.widget-config-item'));
+
+    if (draggedIndex < targetIndex) {
+      e.target.closest('.widget-config-item').after(draggedWidget);
+    } else {
+      e.target.closest('.widget-config-item').before(draggedWidget);
+    }
+
+    // Update positions
+    const newItems = Array.from(container.children);
+    newItems.forEach((item, index) => {
+      const widgetId = item.dataset.widgetId;
+      const widget = dashboardConfig.widgets.find(w => w.id === widgetId);
+      if (widget) widget.position = index;
+    });
+  }
+}
+
+function handleWidgetDragEnd(e) {
+  e.target.classList.remove('dragging');
+  draggedWidget = null;
+}
+
+function toggleWidget(widgetId) {
+  const widget = dashboardConfig.widgets.find(w => w.id === widgetId);
+  if (widget) {
+    widget.enabled = !widget.enabled;
+    renderDashboardConfigList();
+  }
+}
+
+async function saveDashboardConfig() {
+  await window.electronAPI.saveDashboardConfig(dashboardConfig);
+  showToast('Dashboard-Konfiguration gespeichert');
+  document.getElementById('dashboard-config-modal').classList.add('hidden');
+}
+
+// ============================================
+// MULTI-SELECT TASKS
+// ============================================
+
+let selectedTasks = [];
+let multiSelectMode = false;
+
+function toggleMultiSelectMode() {
+  multiSelectMode = !multiSelectMode;
+  document.body.classList.toggle('multi-select-mode', multiSelectMode);
+
+  if (!multiSelectMode) {
+    clearTaskSelection();
+  }
+
+  renderProject();
+}
+
+function toggleTaskSelection(milestoneId, taskId, event) {
+  if (!multiSelectMode) return;
+
+  event.stopPropagation();
+
+  const key = `${milestoneId}:${taskId}`;
+  const index = selectedTasks.findIndex(t => t.key === key);
+
+  if (index >= 0) {
+    selectedTasks.splice(index, 1);
+  } else {
+    selectedTasks.push({ key, milestoneId, taskId });
+  }
+
+  updateMultiSelectToolbar();
+  renderProject();
+}
+
+function clearTaskSelection() {
+  selectedTasks = [];
+  updateMultiSelectToolbar();
+}
+
+function updateMultiSelectToolbar() {
+  let toolbar = document.getElementById('multi-select-toolbar');
+
+  if (selectedTasks.length === 0) {
+    if (toolbar) toolbar.remove();
+    return;
+  }
+
+  if (!toolbar) {
+    toolbar = document.createElement('div');
+    toolbar.id = 'multi-select-toolbar';
+    toolbar.className = 'multi-select-toolbar';
+    document.body.appendChild(toolbar);
+  }
+
+  toolbar.innerHTML = `
+    <span class="multi-select-count">${selectedTasks.length} Tasks ausgewählt</span>
+    <div class="multi-select-actions">
+      <button class="btn btn-secondary btn-sm" onclick="bulkMarkComplete()">✅ Erledigen</button>
+      <button class="btn btn-secondary btn-sm" onclick="bulkSetPriority()">🎯 Priorität</button>
+      <button class="btn btn-danger btn-sm" onclick="bulkDeleteTasks()">🗑️ Löschen</button>
+      <button class="btn btn-secondary btn-sm" onclick="clearTaskSelection(); renderProject();">✕ Abbrechen</button>
+    </div>
+  `;
+}
+
+async function bulkMarkComplete() {
+  for (const selected of selectedTasks) {
+    const milestone = currentProject.milestones.find(m => m.id === selected.milestoneId);
+    if (milestone) {
+      const task = milestone.tasks.find(t => t.id === selected.taskId);
+      if (task) {
+        task.completed = true;
+        await triggerWebhook('taskComplete', { task: task.title });
+      }
+    }
+  }
+
+  await saveProject();
+  clearTaskSelection();
+  renderProject();
+  showToast(`${selectedTasks.length} Tasks als erledigt markiert`);
+}
+
+function bulkSetPriority() {
+  const priority = prompt('Priorität eingeben (high, medium, low):');
+  if (!priority || !['high', 'medium', 'low'].includes(priority)) return;
+
+  for (const selected of selectedTasks) {
+    const milestone = currentProject.milestones.find(m => m.id === selected.milestoneId);
+    if (milestone) {
+      const task = milestone.tasks.find(t => t.id === selected.taskId);
+      if (task) task.priority = priority;
+    }
+  }
+
+  saveProject();
+  clearTaskSelection();
+  renderProject();
+  showToast('Priorität geändert');
+}
+
+async function bulkDeleteTasks() {
+  if (!confirm(`${selectedTasks.length} Tasks wirklich löschen?`)) return;
+
+  for (const selected of selectedTasks) {
+    const milestone = currentProject.milestones.find(m => m.id === selected.milestoneId);
+    if (milestone) {
+      const taskIndex = milestone.tasks.findIndex(t => t.id === selected.taskId);
+      if (taskIndex >= 0) milestone.tasks.splice(taskIndex, 1);
+    }
+  }
+
+  await saveProject();
+  clearTaskSelection();
+  renderProject();
+  showToast('Tasks gelöscht');
+}
+
+// ============================================
+// EVENT LISTENERS FOR NEW FEATURES
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Load webhooks and backups
+  loadWebhooks();
+  loadDashboardConfig();
+
+  // Webhook Modal
+  const webhookBtn = document.getElementById('webhook-btn');
+  const closeWebhook = document.getElementById('close-webhook');
+  const addWebhookBtn = document.getElementById('add-webhook-btn');
+  const saveWebhooksBtn = document.getElementById('save-webhooks-btn');
+
+  if (webhookBtn) {
+    webhookBtn.addEventListener('click', () => {
+      loadWebhooks();
+      document.getElementById('webhook-modal').classList.remove('hidden');
+    });
+  }
+
+  if (closeWebhook) {
+    closeWebhook.addEventListener('click', () => {
+      document.getElementById('webhook-modal').classList.add('hidden');
+    });
+  }
+
+  if (addWebhookBtn) {
+    addWebhookBtn.addEventListener('click', addWebhook);
+  }
+
+  if (saveWebhooksBtn) {
+    saveWebhooksBtn.addEventListener('click', saveWebhooks);
+  }
+
+  // Backup Modal
+  const backupBtn = document.getElementById('backup-btn');
+  const closeBackup = document.getElementById('close-backup');
+  const createBackupBtn = document.getElementById('create-backup-btn');
+
+  if (backupBtn) {
+    backupBtn.addEventListener('click', () => {
+      loadBackups();
+      document.getElementById('backup-modal').classList.remove('hidden');
+    });
+  }
+
+  if (closeBackup) {
+    closeBackup.addEventListener('click', () => {
+      document.getElementById('backup-modal').classList.add('hidden');
+    });
+  }
+
+  if (createBackupBtn) {
+    createBackupBtn.addEventListener('click', createBackup);
+  }
+
+  // iCal Export
+  const exportIcalBtn = document.getElementById('export-ical-btn');
+  const icalBtn = document.querySelector('[id="export-ical-btn"]');
+  const closeIcal = document.getElementById('close-ical');
+
+  // Button in results-actions opens modal
+  const resultsIcalBtn = document.querySelector('.results-actions #export-ical-btn');
+  if (resultsIcalBtn) {
+    resultsIcalBtn.addEventListener('click', () => {
+      document.getElementById('ical-modal').classList.remove('hidden');
+    });
+  }
+
+  // Export button in modal
+  const modalExportIcalBtn = document.querySelector('#ical-modal #export-ical-btn');
+  if (modalExportIcalBtn) {
+    modalExportIcalBtn.addEventListener('click', exportIcal);
+  }
+
+  if (closeIcal) {
+    closeIcal.addEventListener('click', () => {
+      document.getElementById('ical-modal').classList.add('hidden');
+    });
+  }
+
+  // Time Comparison
+  const timecompareBtn = document.getElementById('timecompare-btn');
+  const closeTimecompare = document.getElementById('close-timecompare');
+
+  if (timecompareBtn) {
+    timecompareBtn.addEventListener('click', showTimeComparison);
+  }
+
+  if (closeTimecompare) {
+    closeTimecompare.addEventListener('click', () => {
+      document.getElementById('timecompare-modal').classList.add('hidden');
+    });
+  }
+
+  // Dashboard Config
+  const closeDashboardConfig = document.getElementById('close-dashboard-config');
+  const saveDashboardConfigBtn = document.getElementById('save-dashboard-config-btn');
+
+  if (closeDashboardConfig) {
+    closeDashboardConfig.addEventListener('click', () => {
+      document.getElementById('dashboard-config-modal').classList.add('hidden');
+    });
+  }
+
+  if (saveDashboardConfigBtn) {
+    saveDashboardConfigBtn.addEventListener('click', saveDashboardConfig);
+  }
+
+  // Keyboard shortcut for multi-select
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'm' && e.ctrlKey) {
+      e.preventDefault();
+      toggleMultiSelectMode();
+    }
+  });
+});
+
 // Start
 init();

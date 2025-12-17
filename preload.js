@@ -42,5 +42,26 @@ contextBridge.exposeInMainWorld('electronAPI', {
   planSprint: (data) => ipcRenderer.invoke('plan-sprint', data),
 
   // Auto Tags
-  autoTagTasks: (data) => ipcRenderer.invoke('auto-tag-tasks', data)
+  autoTagTasks: (data) => ipcRenderer.invoke('auto-tag-tasks', data),
+
+  // Webhooks
+  sendWebhook: (data) => ipcRenderer.invoke('send-webhook', data),
+  getWebhooks: () => ipcRenderer.invoke('get-webhooks'),
+  saveWebhooks: (webhooks) => ipcRenderer.invoke('save-webhooks', webhooks),
+
+  // Backup System
+  createBackup: (data) => ipcRenderer.invoke('create-backup', data),
+  listBackups: () => ipcRenderer.invoke('list-backups'),
+  restoreBackup: (data) => ipcRenderer.invoke('restore-backup', data),
+  deleteBackup: (data) => ipcRenderer.invoke('delete-backup', data),
+
+  // iCal Export
+  exportIcal: (data) => ipcRenderer.invoke('export-ical', data),
+
+  // Time Comparison
+  getTimeComparison: (data) => ipcRenderer.invoke('get-time-comparison', data),
+
+  // Custom Dashboard
+  getDashboardConfig: () => ipcRenderer.invoke('get-dashboard-config'),
+  saveDashboardConfig: (config) => ipcRenderer.invoke('save-dashboard-config', config)
 });

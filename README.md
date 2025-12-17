@@ -27,11 +27,14 @@ Eine Electron Desktop-App, die Projektziele mithilfe von AI (Groq API) in strukt
 - **Timer**: Zeiterfassung pro Task mit Start/Stop/Reset
 - **Notizen**: Zusätzliche Informationen pro Task
 - **Erinnerungen**: Datum/Zeit-basierte Erinnerungen
-- **Prompt Generator**: Generiert Claude Code Prompts in verschiedenen Stilen (Detailliert, Minimal, Schritt-für-Schritt, Review, Debug, Tests)
+- **Mehrfachauswahl**: Mehrere Tasks gleichzeitig bearbeiten/löschen (Strg+M)
+- **Prompt Generator**: Generiert Claude Code Prompts in verschiedenen Stilen
 
 ### Dashboard & Tracking
 - **Dashboard**: Übersicht über alle Projekte mit KPIs
+- **Custom Dashboard**: Widgets ein-/ausblenden und Reihenfolge anpassen
 - **Arbeitszeit-Tracking**: Wochenübersicht der getrackteten Zeit
+- **Zeitvergleich-Report**: Detaillierter Vergleich geschätzt vs. tatsächlich
 - **Statistiken**: Fortschritt, erledigte Tasks, Zeitvergleich
 - **Heatmap**: Visualisierung wann am meisten gearbeitet wurde
 - **Dependency-Graph**: Visualisierung der Task-Abhängigkeiten
@@ -40,13 +43,19 @@ Eine Electron Desktop-App, die Projektziele mithilfe von AI (Groq API) in strukt
 - **Markdown-Export**: Projekte als .md Datei exportieren
 - **PDF-Export**: Formatierte PDF über Druckdialog
 - **CSV-Export**: Tasks als Tabelle exportieren
+- **iCal-Export**: Tasks als Kalender-Datei für Google Calendar, Outlook etc.
 - **AI Report**: AI generiert professionelle Statusberichte
+
+### Backup & Sync
+- **Backup-System**: Vollständige Backups aller Projekte erstellen
+- **Restore**: Backups wiederherstellen
+- **Webhook-Benachrichtigungen**: Bei Task-Completion an externe Services senden (Slack, Discord, etc.)
 
 ### UI/UX
 - **Dark Mode / Light Mode**: Premium Dark Theme mit Neon-Grünen Akzenten
 - **Drag & Drop**: Meilensteine per Drag & Drop umsortieren
 - **Suche & Filter**: Tasks durchsuchen und nach Status/Priorität filtern
-- **Keyboard Shortcuts**: Strg+S zum Speichern, Escape zum Schließen
+- **Keyboard Shortcuts**: Strg+S zum Speichern, Strg+M für Mehrfachauswahl, Escape zum Schließen
 
 ## Installation
 
@@ -105,7 +114,7 @@ ai-project-manager/
 │   ├── index.html       # Haupt-UI
 │   ├── styles.css       # Styling (Premium Dark Theme)
 │   └── app.js           # Frontend-Logik
-├── data/                # App-Daten (Settings, Timetracking, Projekte)
+├── data/                # App-Daten (Settings, Timetracking, Projekte, Backups)
 ├── dist/                # Build-Output
 └── package.json
 ```
@@ -115,6 +124,7 @@ ai-project-manager/
 | Shortcut | Aktion |
 |----------|--------|
 | `Strg+S` | Projekt speichern |
+| `Strg+M` | Mehrfachauswahl aktivieren |
 | `Escape` | Modals schließen |
 
 ## Views & Buttons
@@ -127,6 +137,8 @@ ai-project-manager/
 | 📊 | Statistiken Modal |
 | 🔥 | Heatmap (Arbeitszeit-Visualisierung) |
 | 🔗 | Dependency-Graph (Task-Abhängigkeiten) |
+| 💾 | Backup & Restore |
+| 🔔 | Webhook-Einstellungen |
 | 🌙 | Dark/Light Mode Toggle |
 | ⚙️ | Einstellungen |
 
@@ -137,6 +149,8 @@ ai-project-manager/
 | 📤 MD | Markdown exportieren |
 | 📄 PDF | PDF exportieren |
 | 📊 CSV | CSV exportieren |
+| 📅 iCal | Kalender exportieren |
+| ⏱️ Zeitvergleich | Geschätzt vs. Getrackt Report |
 | 🤖 Report | AI-generierten Statusbericht erstellen |
 | 🏃 Sprint | AI Sprint-Planung |
 | 🏷️ Auto-Tags | AI generiert Tags für alle Tasks |
@@ -151,6 +165,42 @@ ai-project-manager/
 | ▶️ | Timer starten |
 | 💬 | AI Chat zu diesem Task |
 | ✂️ | Task in Subtasks aufteilen |
+
+## Neue Features
+
+### Webhook-Benachrichtigungen
+Sende automatische Benachrichtigungen an externe Services (Slack, Discord, Microsoft Teams, etc.) wenn:
+- Ein Task abgeschlossen wird
+- Ein Meilenstein erreicht wird
+- Ein Projekt fertiggestellt wird
+
+Konfiguration unter 🔔 im Header.
+
+### Backup & Restore
+Erstelle vollständige Backups aller Projekte, Einstellungen und Zeiterfassung:
+- Backups werden lokal im `data/backups` Ordner gespeichert
+- Restore stellt alle Projekte wieder her
+- API-Keys werden aus Sicherheitsgründen nicht mitgesichert
+
+### Zeitvergleich-Report
+Detaillierte Analyse der geschätzten vs. tatsächlichen Arbeitszeit:
+- Übersicht mit Gesamtwerten
+- Aufschlüsselung nach Meilenstein
+- Aufschlüsselung nach Tags
+- Detaillierte Task-Tabelle mit Differenzen
+
+### iCal Export
+Exportiere Tasks als .ics Datei für:
+- Google Calendar
+- Microsoft Outlook
+- Apple Calendar
+- Andere Kalender-Apps
+
+### Mehrfachauswahl
+Aktiviere mit `Strg+M` und wähle mehrere Tasks aus:
+- Alle ausgewählten Tasks als erledigt markieren
+- Priorität für alle ändern
+- Mehrere Tasks auf einmal löschen
 
 ## Prompt Generator
 
@@ -187,6 +237,9 @@ Visualisierung des Projektfortschritts mit Ideal- und Ist-Linie.
 
 ### Milestone-Timeline
 Vertikale Zeitachse aller Meilensteine mit Fortschrittsanzeige.
+
+### Zeitvergleich-Report
+Detaillierte Charts und Tabellen zum Vergleich von geschätzter und tatsächlicher Zeit.
 
 ### Prompt Generator
 Modal zum Generieren von AI-Coding-Prompts mit verschiedenen Stilen.
